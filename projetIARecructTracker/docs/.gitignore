@@ -1,0 +1,23 @@
+# Documentation - .gitignore
+
+# Generated documentation
+_build/
+_static/
+_templates/
+
+# Sphinx
+.doctrees/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+
+# Images cache
+.images/
+
+# Temporary files
+*.tmp
+.temp/

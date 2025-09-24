@@ -1,0 +1,31 @@
+# Infrastructure - .gitignore
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Environment files with secrets
+*.env
+!*.env.example
+
+# Volumes and data
+volumes/
+data/
+
+# Logs
+logs/
+*.log
+
+# Certificates and keys
+certs/
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+.temp/
