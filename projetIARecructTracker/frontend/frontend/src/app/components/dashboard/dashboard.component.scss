@@ -1,0 +1,18 @@
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: #6c757d;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  div[style*="grid-template-columns: 2fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  div[style*="display: flex"] {
+    flex-direction: column;
+  }
+}

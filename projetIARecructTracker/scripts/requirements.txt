@@ -1,0 +1,4 @@
+# Dépendances pour les scripts de développement
+asyncpg==0.29.0
+faker==22.1.0
+httpx==0.26.0

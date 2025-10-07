@@ -1,0 +1,16 @@
+{
+  "name": "ia-recruit-tracker",
+  "version": "1.0.0",
+  "description": "AI-powered recruitment tracker with FastAPI backend and Angular frontend",
+  "main": "index.js",
+  "scripts": {
+    "start": "echo 'Please navigate to backend or frontend directories'",
+    "install-all": "cd backend && pip install -r requirements.txt && cd ../frontend/frontend && npm install",
+    "dev-backend": "cd backend && uvicorn main:app --reload",
+    "dev-frontend": "cd frontend/frontend && ng serve",
+    "build-frontend": "cd frontend/frontend && ng build"
+  },
+  "keywords": ["recruitment", "ai", "fastapi", "angular"],
+  "author": "Yannick",
+  "license": "MIT"
+}

@@ -8,6 +8,7 @@ from app.models.schemas import (
     ApplicationWithEvents, ApplicationFull
 )
 from app.services.application_service import ApplicationService
+from app.services.email_to_application_service import EmailToApplicationService
 
 router = APIRouter()
 
@@ -142,5 +143,34 @@ def get_applications_summary(db: Session = Depends(get_db)):
     try:
         application_service = ApplicationService(db)
         return application_service.get_applications_summary()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/process-emails", status_code=200)
+def process_classified_emails(db: Session = Depends(get_db)):
+    """
+    Traite les emails classifiés pour créer automatiquement des candidatures
+    """
+    try:
+        email_to_app_service = EmailToApplicationService(db)
+        results = email_to_app_service.process_classified_emails()
+        return {
+            "message": "Emails traités avec succès",
+            "results": results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/unprocessed-emails/count")
+def get_unprocessed_emails_count(db: Session = Depends(get_db)):
+    """
+    Retourne le nombre d'emails classifiés qui n'ont pas encore de candidature associée
+    """
+    try:
+        email_to_app_service = EmailToApplicationService(db)
+        count = email_to_app_service.get_unprocessed_emails_count()
+        return {"unprocessed_emails": count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

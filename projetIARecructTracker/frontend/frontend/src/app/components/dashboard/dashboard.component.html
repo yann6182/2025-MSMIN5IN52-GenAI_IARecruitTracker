@@ -1,0 +1,131 @@
+<div class="content-header">
+  <h1>Tableau de bord</h1>
+</div>
+
+<div class="content-body">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error">
+    {{ error }}
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !error">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card applications">
+        <div class="stat-value">{{ stats.totalApplications }}</div>
+        <div class="stat-label">Candidatures</div>
+      </div>
+      
+      <div class="stat-card companies">
+        <div class="stat-value">{{ stats.totalCompanies }}</div>
+        <div class="stat-label">Entreprises</div>
+      </div>
+      
+      <div class="stat-card offers">
+        <div class="stat-value">{{ stats.totalOffers }}</div>
+        <div class="stat-label">Offres d'emploi</div>
+      </div>
+      
+      <div class="stat-card emails">
+        <div class="stat-value">{{ stats.totalEmails }}</div>
+        <div class="stat-label">Emails</div>
+      </div>
+    </div>
+
+    <!-- Recent Applications & Status Overview -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
+      
+      <!-- Recent Applications -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Candidatures récentes</h3>
+        </div>
+        <div class="card-body">
+          <div *ngIf="stats.recentApplications.length === 0" class="text-center text-muted">
+            Aucune candidature trouvée
+          </div>
+          
+          <div *ngIf="stats.recentApplications.length > 0" class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Poste</th>
+                  <th>Entreprise</th>
+                  <th>Statut</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let app of stats.recentApplications">
+                  <td>{{ app.job_offer?.title || 'N/A' }}</td>
+                  <td>{{ app.company?.name || 'N/A' }}</td>
+                  <td>
+                    <span [class]="getStatusBadgeClass(app.status)">
+                      {{ app.status }}
+                    </span>
+                  </td>
+                  <td>{{ formatDate(app.created_at) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px;">
+            <a routerLink="/job-applications" class="btn btn-primary">
+              Voir toutes les candidatures
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Overview -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Statut des candidatures</h3>
+        </div>
+        <div class="card-body">
+          <div *ngIf="Object.keys(stats.applicationsByStatus).length === 0" class="text-center text-muted">
+            Aucune donnée disponible
+          </div>
+          
+          <div *ngIf="Object.keys(stats.applicationsByStatus).length > 0">
+            <div *ngFor="let status of Object.keys(stats.applicationsByStatus)" 
+                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <span [class]="getStatusBadgeClass(status)">{{ status }}</span>
+              <span style="font-weight: 600; font-size: 18px;">{{ stats.applicationsByStatus[status] }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-top: 30px;">
+      <div class="card-header">
+        <h3>Actions rapides</h3>
+      </div>
+      <div class="card-body">
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+          <a routerLink="/job-applications" class="btn btn-primary">
+            📋 Nouvelle candidature
+          </a>
+          <a routerLink="/companies" class="btn btn-success">
+            🏢 Ajouter une entreprise
+          </a>
+          <a routerLink="/job-offers" class="btn btn-warning">
+            💼 Nouvelle offre
+          </a>
+          <a routerLink="/nlp" class="btn btn-primary">
+            🤖 Analyser les emails
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

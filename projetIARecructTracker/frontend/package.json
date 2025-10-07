@@ -1,0 +1,14 @@
+{
+  "name": "frontend-workspace",
+  "version": "1.0.0",
+  "description": "Frontend workspace for Angular application",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd frontend && ng serve",
+    "build": "cd frontend && ng build",
+    "install": "cd frontend && npm install"
+  },
+  "keywords": ["angular", "frontend"],
+  "author": "Yannick",
+  "license": "MIT"
+}

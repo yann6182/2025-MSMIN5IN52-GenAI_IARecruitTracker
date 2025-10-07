@@ -1,6 +1,65 @@
-# AI Recruit Tracker
+# 🤖 AI Recruit Tracker - Suivi Intelligent de Candidatures
 
-Gestion intelligente des candidatures à partir des **emails** et d'actions manuelles.
+> Un système de suivi des candidatures d'emploi propulsé par l'IA Mistral, automatisant le traitement et la classification des emails de recrutement.
+
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green?logo=fastapi)
+![Angular](https://img.shields.io/badge/Angular-17+-red?logo=angular)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
+![Mistral AI](https://img.shields.io/badge/Mistral_AI-Integrated-orange)
+
+## ✨ Fonctionnalités principales
+
+### 🧠 Intelligence Artificielle Avancée
+- **Extraction d'entités** : Détection automatique des entreprises, postes, contacts et dates
+- **Classification d'emails** : Reconnaissance automatique des types (ACK, REJECTION, INTERVIEW, OFFER)
+- **Matching sémantique** : Liaison intelligente emails ↔ candidatures via embeddings
+- **Actions automatiques** : Changements de statut et notifications intelligentes
+
+### 📊 Tableau de Bord Complet  
+- Vue d'ensemble des candidatures avec statistiques temps réel
+- Timeline interactive des interactions par candidature
+- Alertes et rappels intelligents basés sur l'analyse IA
+- Métriques de performance du processus de candidature
+
+## 🚀 Démarrage rapide (5 minutes)
+
+### Prérequis
+```bash
+docker --version        # >= 20.10
+docker-compose --version # >= 2.0
+```
+
+### Installation express
+```bash
+# 1. Naviguer dans le projet
+cd projetIARecructTracker
+
+# 2. Configuration environnement
+cp backend/.env.example backend/.env
+# Éditez backend/.env et ajoutez votre MISTRAL_API_KEY
+
+# 3. Démarrage complet
+docker-compose up -d
+
+# 4. Vérification installation
+python scripts/check_install.py
+```
+
+### Accès aux services
+- 🌐 **Application** : <http://localhost:4200>
+- 📚 **API Docs** : <http://localhost:8000/docs>  
+- 🔍 **Health Check** : <http://localhost:8000/health>
+
+### Test des fonctionnalités IA
+```bash
+# Créer des données de test
+python scripts/seed_data.py
+
+# Tester les services NLP
+python scripts/test_nlp.py
+```
 
 ## 🎯 Objectif
 
