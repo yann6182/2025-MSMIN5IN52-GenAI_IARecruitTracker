@@ -142,7 +142,7 @@ async def gmail_oauth_callback(
             logger.warning(f"Erreur OAuth reçue: {error}")
             # Rediriger vers le frontend avec l'erreur
             return RedirectResponse(
-                url=f"http://localhost:4200/oauth-callback?error={error}",
+                url=f"http://localhost:4200/oauth/callback?error={error}",
                 status_code=302
             )
         
@@ -163,7 +163,7 @@ async def gmail_oauth_callback(
             )
             
             # Construire l'URL de callback avec le token
-            callback_url = "http://localhost:4200/oauth-callback?success=true"
+            callback_url = "http://localhost:4200/oauth/callback?success=true"
             callback_url += f"&email={result['user_email']}"
             callback_url += f"&token={access_token}"
             
@@ -178,7 +178,7 @@ async def gmail_oauth_callback(
         else:
             # Rediriger vers le frontend avec erreur
             return RedirectResponse(
-                url=f"http://localhost:4200/oauth-callback?error=authorization_failed",
+                url=f"http://localhost:4200/oauth/callback?error=authorization_failed",
                 status_code=302
             )
             
@@ -187,7 +187,7 @@ async def gmail_oauth_callback(
         
         # Rediriger vers le frontend avec erreur
         return RedirectResponse(
-            url=f"http://localhost:4200/oauth-callback?error=callback_error",
+            url=f"http://localhost:4200/oauth/callback?error=callback_error",
             status_code=302
         )
 

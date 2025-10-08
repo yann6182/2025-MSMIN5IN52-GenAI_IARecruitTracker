@@ -179,15 +179,21 @@ export class OAuthCallbackComponent implements OnInit {
           // Connecter automatiquement l'utilisateur si un token est présent
           if (token) {
             this.authenticateUserWithToken(token, email);
+            
+            // Attendre que l'authentification soit complète avant de rediriger
+            setTimeout(() => {
+              console.log('Redirection vers le dashboard...');
+              this.redirectToApp();
+            }, 500);
+          } else {
+            // Pas de token, redirection après 2 secondes pour voir le message
+            setTimeout(() => {
+              this.redirectToApp();
+            }, 2000);
           }
           
           // Notifier le service OAuth
           this.gmailOAuthService.handleOAuthCallback(true, email);
-          
-          // Redirection automatique après 2 secondes
-          setTimeout(() => {
-            this.redirectToApp();
-          }, 2000);
           
         } else {
           this.success = false;
@@ -232,6 +238,14 @@ export class OAuthCallbackComponent implements OnInit {
     });
     
     console.log('Utilisateur connecté automatiquement via Gmail:', email);
+    console.log('Token stocké dans localStorage:', localStorage.getItem('ai_recruit_token') ? 'OK' : 'ERREUR');
+    
+    // Vérifier l'état d'authentification après un court délai
+    setTimeout(() => {
+      this.authService.isAuthenticated$.subscribe(isAuth => {
+        console.log('État authentification après setCurrentUser:', isAuth);
+      });
+    }, 100);
   }
 
   retryAuth(): void {
@@ -239,6 +253,14 @@ export class OAuthCallbackComponent implements OnInit {
   }
 
   redirectToApp(): void {
-    this.router.navigate(['/dashboard']);
+    console.log('Navigation vers /dashboard...');
+    this.router.navigate(['/dashboard'], { 
+      replaceUrl: true,
+      skipLocationChange: false 
+    }).then(success => {
+      console.log('Navigation réussie:', success);
+    }).catch(error => {
+      console.error('Erreur navigation:', error);
+    });
   }
 }
