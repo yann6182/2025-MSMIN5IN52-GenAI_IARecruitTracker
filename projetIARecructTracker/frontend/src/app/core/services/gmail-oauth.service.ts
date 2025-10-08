@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface GmailOAuthStatus {
@@ -42,8 +43,36 @@ export class GmailOAuthService {
   public gmailStatus$ = this.gmailStatusSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Vérifier le statut au démarrage
-    this.checkGmailStatus();
+    // Vérifier le statut au démarrage seulement si un token existe
+    if (this.hasAuthToken()) {
+      this.checkGmailStatus();
+    }
+  }
+
+  /**
+   * Vérifie si un token d'authentification est présent
+   */
+  private hasAuthToken(): boolean {
+    const token = localStorage.getItem('ai_recruit_token');
+    return !!token;
+  }
+
+  /**
+   * Retourne un observable pour savoir si Gmail est connecté
+   */
+  get isGmailConnected$(): Observable<boolean> {
+    return this.gmailStatus$.pipe(
+      map((status: GmailOAuthStatus | null) => status?.connected ?? false)
+    );
+  }
+
+  /**
+   * Initie le processus d'inscription et d'autorisation Gmail OAuth en une étape
+   * Redirige vers Google OAuth pour créer un compte et autoriser Gmail
+   */
+  initiateGmailAuthAndRegister(): void {
+    // Redirection directe vers le nouveau endpoint qui gère l'inscription
+    window.location.href = `${this.apiUrl}/gmail/authorize-and-register`;
   }
 
   /**
@@ -54,7 +83,8 @@ export class GmailOAuthService {
     // Récupérer le token depuis localStorage
     const token = localStorage.getItem('access_token');
     if (!token) {
-      console.error('Aucun token d\'authentification trouvé');
+      // Si pas de token, utiliser l'inscription automatique
+      this.initiateGmailAuthAndRegister();
       return;
     }
     
@@ -69,18 +99,22 @@ export class GmailOAuthService {
     return this.http.get<GmailAuthResponse>(`${this.apiUrl}/gmail/status`);
   }
 
-  /**
-   * Vérifie et met à jour le statut Gmail
+    /**
+   * Vérifie le statut de l'autorisation Gmail
    */
   checkGmailStatus(): void {
-    this.getGmailStatus().subscribe({
+    // Ne pas vérifier si pas de token
+    if (!this.hasAuthToken()) {
+      this.gmailStatusSubject.next(null);
+      return;
+    }
+
+    this.http.get<GmailOAuthStatus>(`${this.apiUrl}/gmail/status`).subscribe({
       next: (response) => {
-        if (response.success && response.status) {
-          this.gmailStatusSubject.next(response.status);
-        }
+        this.gmailStatusSubject.next(response);
       },
       error: (error) => {
-        console.error('Erreur lors de la vérification du statut Gmail:', error);
+        console.warn('Impossible de vérifier le statut Gmail:', error);
         this.gmailStatusSubject.next(null);
       }
     });

@@ -40,6 +40,15 @@ export class AuthService {
   }
 
   /**
+   * Met à jour l'utilisateur actuel et l'état d'authentification
+   */
+  setCurrentUser(user: User): void {
+    this.currentUserSubject.next(user);
+    this.isAuthenticatedSubject.next(true);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  /**
    * Initialise l'état d'authentification depuis le localStorage
    */
   private initializeAuth(): void {

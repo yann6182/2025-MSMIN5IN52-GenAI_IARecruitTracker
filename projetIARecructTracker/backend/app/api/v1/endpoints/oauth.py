@@ -45,6 +45,35 @@ def get_user_from_token(token: str, db: Session) -> User:
     return user
 
 
+@router.get("/gmail/authorize-and-register")
+async def authorize_gmail_and_register(
+    db: Session = Depends(get_db)
+):
+    """
+    Autorisation Gmail avec création automatique de compte utilisateur
+    
+    Cette route permet à un nouvel utilisateur de s'inscrire ET d'autoriser Gmail en une seule étape.
+    L'utilisateur sera redirigé vers Google OAuth, et à son retour, un compte sera créé automatiquement
+    si il n'existe pas déjà.
+    """
+    try:
+        # Démarrer le processus OAuth sans authentification préalable
+        # L'utilisateur sera créé lors du callback
+        oauth_service = GmailOAuthService(db)
+        
+        # Utiliser la méthode spécifique pour l'inscription qui génère le bon state
+        auth_url, state = oauth_service.generate_registration_url()
+            
+        logger.info(f"Redirection vers autorisation Gmail avec inscription: {auth_url}")
+        return RedirectResponse(url=auth_url)
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de l'autorisation Gmail avec inscription: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'autorisation Gmail: {str(e)}"
+        )
+
 @router.get("/gmail/authorize")
 async def authorize_gmail(
     token: Optional[str] = Query(None, description="JWT token pour l'authentification OAuth"),
@@ -123,9 +152,27 @@ async def gmail_oauth_callback(
         if result["success"]:
             logger.info(f"OAuth callback réussi: {result['user_email']}")
             
+            # Générer un token JWT pour connecter l'utilisateur automatiquement
+            from app.services.auth_service import create_access_token
+            from datetime import timedelta
+            
+            access_token_expires = timedelta(hours=24)
+            access_token = create_access_token(
+                data={"sub": result['user_email'], "user_id": str(result['user_id'])}, 
+                expires_delta=access_token_expires
+            )
+            
+            # Construire l'URL de callback avec le token
+            callback_url = "http://localhost:4200/oauth-callback?success=true"
+            callback_url += f"&email={result['user_email']}"
+            callback_url += f"&token={access_token}"
+            
+            if result.get("is_new_user"):
+                callback_url += "&new_user=true"
+            
             # Rediriger vers le frontend avec succès
             return RedirectResponse(
-                url=f"http://localhost:4200/oauth-callback?success=true&email={result['user_email']}",
+                url=callback_url,
                 status_code=302
             )
         else:

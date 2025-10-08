@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { GmailOAuthService } from '../../core/services/gmail-oauth.service';
 import { RegisterRequest } from '../../models/auth.model';
 
 @Component({

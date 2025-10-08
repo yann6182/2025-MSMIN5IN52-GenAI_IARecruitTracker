@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { GmailOAuthService } from '../../core/services/gmail-oauth.service';
 import { LoginRequest } from '../../models/auth.model';
 
 @Component({
@@ -101,6 +102,28 @@ import { LoginRequest } from '../../models/auth.model';
             </span>
           </button>
         </form>
+
+        <!-- Séparateur -->
+        <div class="auth-divider">
+          <span>ou</span>
+        </div>
+
+        <!-- Connexion Gmail -->
+        <div class="gmail-auth-section">
+          <button 
+            type="button"
+            class="btn btn-gmail"
+            (click)="loginWithGmail()"
+            [disabled]="isLoading"
+          >
+            <i class="fab fa-google"></i>
+            <span>Se connecter avec Gmail</span>
+          </button>
+          <p class="gmail-info">
+            <i class="fas fa-info-circle"></i>
+            Créez un compte automatiquement et analysez vos emails de candidature
+          </p>
+        </div>
 
         <!-- Liens additionnels -->
         <div class="auth-links">
@@ -310,6 +333,85 @@ import { LoginRequest } from '../../models/auth.model';
       width: 100%;
     }
 
+    /* Séparateur */
+    .auth-divider {
+      margin: 24px 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .auth-divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e1e5e9;
+    }
+
+    .auth-divider span {
+      background: white;
+      padding: 0 16px;
+      color: #6c757d;
+      font-size: 14px;
+    }
+
+    /* Section Gmail */
+    .gmail-auth-section {
+      margin: 24px 0;
+    }
+
+    .btn-gmail {
+      width: 100%;
+      background: #db4437;
+      color: white;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .btn-gmail:hover:not(:disabled) {
+      background: #c23321;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(219, 68, 55, 0.3);
+    }
+
+    .btn-gmail:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-gmail i {
+      font-size: 18px;
+    }
+
+    .gmail-info {
+      text-align: center;
+      font-size: 12px;
+      color: #6c757d;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .gmail-info i {
+      color: #17a2b8;
+    }
+
     .loading-spinner {
       display: flex;
       align-items: center;
@@ -412,6 +514,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
+    private gmailOAuthService: GmailOAuthService,
     private router: Router,
     private route: ActivatedRoute
   ) {
@@ -478,6 +581,11 @@ export class LoginComponent implements OnInit {
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  loginWithGmail(): void {
+    // Utiliser le service Gmail OAuth pour l'inscription/connexion automatique
+    this.gmailOAuthService.initiateGmailAuthAndRegister();
   }
 
   isFieldInvalid(fieldName: string): boolean {

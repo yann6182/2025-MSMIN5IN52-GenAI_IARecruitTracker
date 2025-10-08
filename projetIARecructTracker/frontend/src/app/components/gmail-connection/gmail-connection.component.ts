@@ -13,146 +13,152 @@ import { GmailOAuthService, GmailOAuthStatus } from '../../core/services/gmail-o
       <div class="card-header">
         <h3>
           <i class="fab fa-google"></i>
-          Connexion Gmail
+          Analyseur d'emails de candidature
         </h3>
-        <p>Connectez votre compte Gmail pour analyser automatiquement vos emails de candidature</p>
+        <p>Analysez automatiquement vos emails pour suivre vos candidatures</p>
       </div>
       
       <div class="card-body">
         <!-- État non connecté -->
         <div *ngIf="!gmailStatus?.connected" class="not-connected">
-          <div class="status-indicator disconnected">
-            <i class="fas fa-circle"></i>
-            <span>Non connecté</span>
+          <div class="welcome-message">
+            <i class="fas fa-envelope-open-text"></i>
+            <h4>Commencez votre suivi de candidatures</h4>
+            <p>
+              Connectez votre Gmail pour que nous analysions automatiquement vos emails 
+              et détections les réponses aux candidatures, les invitations d'entretien et plus encore.
+            </p>
           </div>
           
-          <p class="description">
-            Pour une expérience optimale, connectez votre compte Gmail. 
-            Cela permettra à l'application d'analyser automatiquement vos emails 
-            et de détecter les candidatures, entretiens et réponses.
-          </p>
-          
           <button 
-            class="btn btn-primary gmail-connect-btn"
+            class="btn btn-google gmail-connect-btn"
             (click)="connectGmail()"
             [disabled]="isProcessing">
             <i class="fab fa-google"></i>
-            {{ isProcessing ? 'Connexion...' : 'Connecter Gmail' }}
+            {{ isProcessing ? 'Connexion en cours...' : 'Se connecter avec Gmail' }}
           </button>
           
           <div class="security-info">
-            <p><i class="fas fa-shield-alt"></i> Sécurisé par OAuth 2.0</p>
-            <p><i class="fas fa-eye"></i> Lecture seule de vos emails</p>
+            <div class="security-item">
+              <i class="fas fa-shield-alt"></i>
+              <span>Connexion sécurisée</span>
+            </div>
+            <div class="security-item">
+              <i class="fas fa-eye"></i>
+              <span>Lecture seule de vos emails</span>
+            </div>
+            <div class="security-item">
+              <i class="fas fa-lock"></i>
+              <span>Vos données restent privées</span>
+            </div>
           </div>
         </div>
         
         <!-- État connecté -->
         <div *ngIf="gmailStatus?.connected" class="connected">
-          <div class="status-indicator connected">
-            <i class="fas fa-circle"></i>
-            <span>Connecté</span>
-          </div>
-          
-                    <div class="connection-details">
-            <div class="detail-row">
-              <strong>Email :</strong>
-              <span>{{ gmailStatus?.email || 'Non disponible' }}</span>
+          <div class="welcome-back">
+            <div class="avatar">
+              <i class="fas fa-user"></i>
             </div>
-            <div class="detail-row">
-              <strong>Statut du token :</strong>
-              <span class="token-status" [class.valid]="gmailStatus?.token_valid" [class.invalid]="!gmailStatus?.token_valid">
-                <i [class]="gmailStatus?.token_valid ? 'fas fa-check' : 'fas fa-exclamation-triangle'"></i>
-                <span>{{ gmailStatus?.token_valid ? 'Token valide' : 'Token expiré' }}</span>
+            <div class="user-info">
+              <h4>Bon retour !</h4>
+              <p>{{ gmailStatus?.email }}</p>
+              <span class="status-badge" [class.active]="gmailStatus?.token_valid">
+                <i class="fas fa-circle"></i>
+                {{ gmailStatus?.token_valid ? 'Prêt à analyser' : 'Reconnexion nécessaire' }}
               </span>
             </div>
-            <div class="detail-row">
-              <strong>Permissions :</strong>
-              <span>{{ gmailStatus?.scopes?.length || 0 }} permissions accordées</span>
-            </div>
-            <div class="detail-row">
-              <strong>Dernière synchronisation :</strong>
-              <span>{{ gmailStatus?.last_sync || 'Jamais' }}</span>
+          </div>
+          
+          <div class="stats-overview" *ngIf="gmailStatus?.last_sync">
+            <div class="stat-item">
+              <i class="fas fa-envelope"></i>
+              <span>Dernière analyse: {{ formatDate(gmailStatus?.last_sync || '') }}</span>
             </div>
           </div>
         </div>
         
-        <!-- Actions -->
+        <!-- Actions simplifiées -->
         <div class="actions">
-          <button 
-            class="btn btn-primary" 
-            (click)="syncEmails()"
-            [disabled]="isProcessing || !gmailStatus?.token_valid">
-            <i class="fas fa-sync-alt" [class.fa-spin]="isProcessing"></i>
-            Synchroniser les emails
-          </button>
-          
-          <button 
-            class="btn btn-secondary" 
-            (click)="refreshToken()"
-            [disabled]="isProcessing"
-            *ngIf="!gmailStatus?.token_valid">
-            <i class="fas fa-refresh"></i>
-            Renouveler le token
-          </button>
-          
-          <div class="actions">
+          <!-- Si connecté et token valide -->
+          <div *ngIf="gmailStatus?.connected && gmailStatus?.token_valid" class="main-actions">
             <button 
-              class="btn btn-secondary"
-              (click)="testConnection()"
-              [disabled]="isProcessing">
-              <i class="fas fa-heartbeat"></i>
-              {{ isProcessing ? 'Test...' : 'Tester la connexion' }}
-            </button>
-            
-            <button 
-              class="btn btn-success"
+              class="btn btn-primary btn-large"
               (click)="syncEmails()"
-              [disabled]="isProcessing || !gmailStatus?.token_valid">
-              <i class="fas fa-sync"></i>
-              {{ isProcessing ? 'Synchronisation...' : 'Synchroniser les emails' }}
+              [disabled]="isProcessing">
+              <i class="fas fa-magic" [class.fa-spin]="isProcessing"></i>
+              {{ isProcessing ? 'Analyse en cours...' : 'Analyser mes emails' }}
             </button>
             
             <button 
-              class="btn btn-warning"
-              (click)="refreshToken()"
-              [disabled]="isProcessing"
-              *ngIf="!gmailStatus?.token_valid">
-              <i class="fas fa-refresh"></i>
-              Rafraîchir le token
-            </button>
-            
-            <button 
-              class="btn btn-danger"
+              class="btn btn-outline"
               (click)="disconnectGmail()"
               [disabled]="isProcessing">
-              <i class="fas fa-unlink"></i>
-              Déconnecter
+              <i class="fas fa-sign-out-alt"></i>
+              Se déconnecter
+            </button>
+          </div>
+          
+          <!-- Si connecté mais token invalide -->
+          <div *ngIf="gmailStatus?.connected && !gmailStatus?.token_valid" class="reconnect-actions">
+            <button 
+              class="btn btn-primary btn-large"
+              (click)="connectGmail()"
+              [disabled]="isProcessing">
+              <i class="fas fa-refresh"></i>
+              {{ isProcessing ? 'Reconnexion...' : 'Reconnecter Gmail' }}
+            </button>
+            
+            <button 
+              class="btn btn-outline"
+              (click)="disconnectGmail()"
+              [disabled]="isProcessing">
+              <i class="fas fa-times"></i>
+              Annuler
             </button>
           </div>
         </div>
         
-        <!-- Messages de statut -->
-        <div *ngIf="statusMessage" class="status-message" [class]="messageType">
+        <!-- Messages utilisateur -->
+        <div *ngIf="statusMessage" class="user-message" [class]="messageType">
           <i [class]="getMessageIcon()"></i>
-          {{ statusMessage }}
+          {{ getUserFriendlyMessage(statusMessage) }}
         </div>
         
-        <!-- Résultats de synchronisation -->
-        <div *ngIf="syncResult" class="sync-result">
-          <h4>Résultat de la synchronisation</h4>
-          <div class="sync-stats">
-            <div class="stat">
+        <!-- Résultats d'analyse -->
+        <div *ngIf="syncResult" class="analysis-result">
+          <div class="result-header">
+            <i class="fas fa-chart-line"></i>
+            <h4>Analyse terminée !</h4>
+          </div>
+          
+          <div class="result-summary">
+            <div class="summary-item success" *ngIf="syncResult.synced_emails > 0">
               <span class="number">{{ syncResult.synced_emails }}</span>
-              <span class="label">Nouveaux emails</span>
+              <span class="label">{{ syncResult.synced_emails === 1 ? 'nouveau email analysé' : 'nouveaux emails analysés' }}</span>
             </div>
-            <div class="stat">
+            
+            <div class="summary-item info" *ngIf="syncResult.skipped_emails > 0">
               <span class="number">{{ syncResult.skipped_emails }}</span>
-              <span class="label">Ignorés</span>
+              <span class="label">{{ syncResult.skipped_emails === 1 ? 'email déjà connu' : 'emails déjà connus' }}</span>
             </div>
-            <div class="stat">
+            
+            <div class="summary-item warning" *ngIf="syncResult.errors > 0">
               <span class="number">{{ syncResult.errors }}</span>
-              <span class="label">Erreurs</span>
+              <span class="label">{{ syncResult.errors === 1 ? 'email non analysable' : 'emails non analysables' }}</span>
             </div>
+            
+            <div class="summary-item neutral" *ngIf="syncResult.synced_emails === 0 && syncResult.skipped_emails === 0">
+              <i class="fas fa-check-circle"></i>
+              <span class="label">Aucun nouvel email de candidature trouvé</span>
+            </div>
+          </div>
+          
+          <div class="next-steps" *ngIf="syncResult.synced_emails > 0">
+            <p>
+              <i class="fas fa-arrow-right"></i>
+              Consultez l'onglet <strong>Candidatures</strong> pour voir les nouveaux suivis détectés
+            </p>
           </div>
         </div>
       </div>
@@ -161,223 +167,372 @@ import { GmailOAuthService, GmailOAuthStatus } from '../../core/services/gmail-o
   styles: [`
     .gmail-connection-card {
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       margin: 20px 0;
+      overflow: hidden;
     }
     
     .card-header {
-      padding: 24px;
-      border-bottom: 1px solid #e9ecef;
+      padding: 32px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       text-align: center;
     }
     
     .card-header h3 {
       margin: 0 0 8px 0;
-      color: #333;
-      font-size: 1.5rem;
-    }
-    
-    .card-header h3 i {
-      color: #db4437;
-      margin-right: 8px;
+      font-size: 24px;
+      font-weight: 600;
     }
     
     .card-header p {
       margin: 0;
-      color: #6c757d;
-      font-size: 0.95rem;
+      opacity: 0.9;
+      font-size: 16px;
     }
     
     .card-body {
-      padding: 24px;
+      padding: 32px 24px;
     }
     
-    .status-indicator {
-      display: flex;
-      align-items: center;
+    /* État non connecté */
+    .welcome-message {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .welcome-message i {
+      font-size: 48px;
+      color: #667eea;
       margin-bottom: 16px;
-      font-weight: 500;
     }
     
-    .status-indicator i {
-      margin-right: 8px;
-      font-size: 0.8rem;
+    .welcome-message h4 {
+      margin: 0 0 16px 0;
+      font-size: 20px;
+      color: #2c3e50;
     }
     
-    .status-indicator.connected i {
-      color: #28a745;
-    }
-    
-    .status-indicator.disconnected i {
-      color: #dc3545;
-    }
-    
-    .description {
+    .welcome-message p {
       color: #6c757d;
-      line-height: 1.5;
-      margin-bottom: 20px;
+      line-height: 1.6;
+      max-width: 500px;
+      margin: 0 auto;
     }
     
     .gmail-connect-btn {
-      background: #db4437 !important;
-      border-color: #db4437 !important;
-      font-size: 1.1rem;
-      padding: 12px 24px;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto 24px auto;
+      display: block;
     }
     
-    .gmail-connect-btn:hover {
-      background: #c23321 !important;
-      border-color: #c23321 !important;
+    .btn-google {
+      background: #db4437;
+      border: none;
+      color: white;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: 8px;
+      transition: all 0.3s ease;
     }
     
-    .gmail-connect-btn i {
-      margin-right: 8px;
+    .btn-google:hover:not(:disabled) {
+      background: #c23321;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(219, 68, 55, 0.3);
+    }
+    
+    .btn-google:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
     
     .security-info {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid #e9ecef;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 24px;
     }
     
-    .security-info p {
-      color: #6c757d;
-      font-size: 0.9rem;
-      margin: 4px 0;
-    }
-    
-    .security-info i {
-      color: #28a745;
-      margin-right: 8px;
-      width: 16px;
-    }
-    
-    .connection-info {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 16px;
-      margin: 16px 0;
-    }
-    
-    .connection-info > div {
+    .security-item {
       display: flex;
       align-items: center;
-      margin: 8px 0;
-    }
-    
-    .connection-info i {
-      margin-right: 8px;
-      width: 16px;
+      gap: 8px;
       color: #6c757d;
+      font-size: 14px;
     }
     
-    .token-status.valid {
+    .security-item i {
       color: #28a745;
     }
     
-    .token-status.invalid {
-      color: #dc3545;
+    /* État connecté */
+    .welcome-back {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 12px;
     }
     
-    .actions {
+    .avatar {
+      width: 60px;
+      height: 60px;
+      background: #667eea;
+      border-radius: 50%;
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+    }
+    
+    .user-info h4 {
+      margin: 0 0 4px 0;
+      color: #2c3e50;
+    }
+    
+    .user-info p {
+      margin: 0 0 8px 0;
+      color: #6c757d;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 16px;
+      background: #e9ecef;
+      color: #6c757d;
+    }
+    
+    .status-badge.active {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .status-badge i {
+      font-size: 8px;
+    }
+    
+    .stats-overview {
+      margin-bottom: 24px;
+    }
+    
+    .stat-item {
+      display: flex;
+      align-items: center;
       gap: 8px;
-      margin-top: 16px;
+      color: #6c757d;
+      font-size: 14px;
+    }
+    
+    /* Actions */
+    .actions {
+      margin: 24px 0;
+    }
+    
+    .main-actions, .reconnect-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
     }
     
     .btn {
-      padding: 8px 16px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.9rem;
       transition: all 0.3s ease;
-      display: flex;
+      font-weight: 500;
+      display: inline-flex;
       align-items: center;
+      gap: 8px;
     }
     
-    .btn i {
-      margin-right: 6px;
+    .btn-large {
+      padding: 16px 32px;
+      font-size: 16px;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+      padding: 12px 24px;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: #5a6fd8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      color: #6c757d;
+      border: 2px solid #dee2e6;
+      padding: 10px 22px;
+    }
+    
+    .btn-outline:hover:not(:disabled) {
+      background: #f8f9fa;
+      border-color: #adb5bd;
     }
     
     .btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
     }
     
-    .btn-primary { background: #007bff; color: white; }
-    .btn-secondary { background: #6c757d; color: white; }
-    .btn-success { background: #28a745; color: white; }
-    .btn-warning { background: #ffc107; color: #212529; }
-    .btn-danger { background: #dc3545; color: white; }
-    
-    .status-message {
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 16px;
+    /* Messages */
+    .user-message {
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
       display: flex;
       align-items: center;
+      gap: 12px;
     }
     
-    .status-message i {
-      margin-right: 8px;
-    }
-    
-    .status-message.success {
+    .user-message.success {
       background: #d4edda;
       color: #155724;
-      border: 1px solid #c3e6cb;
+      border-left: 4px solid #28a745;
     }
     
-    .status-message.error {
+    .user-message.error {
       background: #f8d7da;
       color: #721c24;
-      border: 1px solid #f5c6cb;
+      border-left: 4px solid #dc3545;
     }
     
-    .status-message.info {
+    .user-message.info {
       background: #d1ecf1;
       color: #0c5460;
-      border: 1px solid #bee5eb;
+      border-left: 4px solid #17a2b8;
     }
     
-    .sync-result {
+    /* Résultats d'analyse */
+    .analysis-result {
       background: #f8f9fa;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 16px;
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 24px;
     }
     
-    .sync-result h4 {
-      margin: 0 0 12px 0;
-      color: #333;
-      font-size: 1.1rem;
-    }
-    
-    .sync-stats {
+    .result-header {
       display: flex;
-      gap: 16px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
     }
     
-    .stat {
-      text-align: center;
-      flex: 1;
+    .result-header i {
+      color: #28a745;
+      font-size: 20px;
     }
     
-    .stat .number {
-      display: block;
-      font-size: 1.5rem;
+    .result-header h4 {
+      margin: 0;
+      color: #2c3e50;
+    }
+    
+    .result-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: white;
+    }
+    
+    .summary-item.success {
+      border-left: 4px solid #28a745;
+    }
+    
+    .summary-item.info {
+      border-left: 4px solid #17a2b8;
+    }
+    
+    .summary-item.warning {
+      border-left: 4px solid #ffc107;
+    }
+    
+    .summary-item.neutral {
+      border-left: 4px solid #6c757d;
+    }
+    
+    .summary-item .number {
+      font-size: 24px;
       font-weight: bold;
-      color: #007bff;
+      color: #2c3e50;
+      min-width: 40px;
     }
     
-    .stat .label {
-      display: block;
-      font-size: 0.85rem;
+    .summary-item .label {
       color: #6c757d;
-      margin-top: 4px;
+    }
+    
+    .next-steps {
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .next-steps p {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #495057;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .card-header {
+        padding: 24px 16px;
+      }
+      
+      .card-body {
+        padding: 24px 16px;
+      }
+      
+      .security-info {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .welcome-back {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .main-actions, .reconnect-actions {
+        flex-direction: column;
+      }
+      
+      .btn-large {
+        width: 100%;
+      }
     }
   `]
 })
@@ -541,6 +696,58 @@ export class GmailConnectionComponent implements OnInit, OnDestroy {
       case 'error': return 'fas fa-exclamation-circle';
       case 'info': return 'fas fa-info-circle';
       default: return 'fas fa-info-circle';
+    }
+  }
+
+  getUserFriendlyMessage(message: string): string {
+    // Convertir les messages techniques en messages utilisateur
+    const messageMap: {[key: string]: string} = {
+      'Token invalide': 'Votre connexion Gmail a expiré, veuillez vous reconnecter',
+      'Token rafraîchi avec succès': 'Connexion Gmail mise à jour avec succès',
+      'Échec du rafraîchissement': 'Problème de connexion, veuillez vous reconnecter',
+      'Erreur lors du rafraîchissement': 'Problème de connexion, veuillez vous reconnecter',
+      'Synchronisation terminée': 'Analyse de vos emails terminée !',
+      'Erreur lors de la synchronisation': 'Impossible d\'analyser vos emails pour le moment',
+      'Connexion OK': 'Votre Gmail est bien connecté !',
+      'Connexion échouée': 'Problème de connexion avec Gmail'
+    };
+
+    // Chercher une correspondance exacte ou partielle
+    for (const [tech, friendly] of Object.entries(messageMap)) {
+      if (message.includes(tech)) {
+        return friendly;
+      }
+    }
+
+    return message; // Retourner le message original si pas de correspondance
+  }
+
+  formatDate(dateString: string): string {
+    try {
+      if (!dateString) {
+        return 'Jamais';
+      }
+      
+      const date = new Date(dateString);
+      const now = new Date();
+      
+      // Vérifier si la date est valide
+      if (isNaN(date.getTime())) {
+        return 'Date invalide';
+      }
+      
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        return 'Hier';
+      } else if (diffDays < 7) {
+        return `Il y a ${diffDays} jours`;
+      } else {
+        return date.toLocaleDateString('fr-FR');
+      }
+    } catch {
+      return 'Date inconnue';
     }
   }
 

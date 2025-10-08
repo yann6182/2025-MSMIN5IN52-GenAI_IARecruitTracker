@@ -4,8 +4,13 @@ import { AuthGuard, GuestGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/auth/login',
-    pathMatch: 'full'
+    loadComponent: () => import('./components/auth/gmail-auth-welcome/gmail-auth-welcome.component').then(m => m.GmailAuthWelcomeComponent)
+  },
+  
+  // Page d'accueil Gmail Auth
+  {
+    path: 'welcome',
+    loadComponent: () => import('./components/auth/gmail-auth-welcome/gmail-auth-welcome.component').then(m => m.GmailAuthWelcomeComponent)
   },
   
   // Routes d'authentification (accessibles uniquement aux utilisateurs non connectés)

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GmailOAuthService } from '../../core/services/gmail-oauth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-oauth-callback',
@@ -147,11 +148,13 @@ export class OAuthCallbackComponent implements OnInit {
   success = false;
   email = '';
   errorMessage = '';
+  isNewUser = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private gmailOAuthService: GmailOAuthService
+    private gmailOAuthService: GmailOAuthService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -160,6 +163,10 @@ export class OAuthCallbackComponent implements OnInit {
       const success = params['success'] === 'true';
       const email = params['email'];
       const error = params['error'];
+      const token = params['token'];
+      const newUser = params['new_user'] === 'true';
+
+      console.log('OAuth Callback - Params reçus:', { success, email, hasToken: !!token, newUser, error });
 
       setTimeout(() => {
         this.isLoading = false;
@@ -167,14 +174,20 @@ export class OAuthCallbackComponent implements OnInit {
         if (success && email) {
           this.success = true;
           this.email = email;
+          this.isNewUser = newUser;
+          
+          // Connecter automatiquement l'utilisateur si un token est présent
+          if (token) {
+            this.authenticateUserWithToken(token, email);
+          }
           
           // Notifier le service OAuth
           this.gmailOAuthService.handleOAuthCallback(true, email);
           
-          // Redirection automatique après 3 secondes
+          // Redirection automatique après 2 secondes
           setTimeout(() => {
             this.redirectToApp();
-          }, 3000);
+          }, 2000);
           
         } else {
           this.success = false;
@@ -198,6 +211,27 @@ export class OAuthCallbackComponent implements OnInit {
       default:
         return 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
     }
+  }
+
+  /**
+   * Authentifie l'utilisateur avec le token reçu
+   */
+  private authenticateUserWithToken(token: string, email: string): void {
+    // Stocker le token avec la bonne clé utilisée par AuthService
+    localStorage.setItem('ai_recruit_token', token);
+    
+    // Connecter l'utilisateur avec les informations basiques
+    this.authService.setCurrentUser({
+      id: '',
+      email: email,
+      is_active: true,
+      full_name: '',
+      is_verified: true,
+      created_at: '',
+      updated_at: ''
+    });
+    
+    console.log('Utilisateur connecté automatiquement via Gmail:', email);
   }
 
   retryAuth(): void {
