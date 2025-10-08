@@ -21,7 +21,13 @@ async def ingest_emails(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Ingérer les emails depuis la boîte mail de l'utilisateur
+    [DEPRECATED] Ingérer les emails depuis IMAP
+    
+    ⚠️ Cette méthode est obsolète. Utilisez plutôt:
+    - POST /api/v1/oauth/gmail/authorize-and-register pour s'authentifier avec Gmail OAuth
+    - POST /api/v1/oauth/gmail/sync-emails pour synchroniser les emails
+    
+    Gmail OAuth 2.0 est plus sécurisé et ne nécessite pas de mot de passe d'application.
     """
     try:
         # Service d'ingestion

@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { EmailService, FrontendNLPStats } from '../../services/email.service';
+import { GmailOAuthService } from '../../core/services/gmail-oauth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface NLPStats {
   totalProcessed: number;
@@ -226,17 +229,16 @@ interface NLPStats {
         </div>
 
         <div class="email-ingestion-section">
-          <h2>📬 Ingestion d'Emails</h2>
-          <p>Récupérer et analyser les emails directement depuis votre boîte mail</p>
-          
+          <h2>� Synchronisation Gmail</h2>
+          <p class="info-text">
+            🔒 Utilisez Gmail OAuth pour synchroniser vos emails en toute sécurité
+          </p>
           <div class="ingestion-controls">
             <div class="control-group">
-              <label for="ingestionInterval">Période à récupérer :</label>
-              <select id="ingestionInterval" [(ngModel)]="selectedIngestionInterval" class="interval-select">
-                <option value="1">Dernier jour</option>
-                <option value="3">Derniers 3 jours</option>
+              <label for="daysBack">Période de synchronisation :</label>
+              <select id="daysBack" [(ngModel)]="selectedIngestionInterval" class="days-select">
                 <option value="7">Dernière semaine</option>
-                <option value="14">Derniers 14 jours</option>
+                <option value="14">Dernières 2 semaines</option>
                 <option value="30">Dernier mois</option>
               </select>
             </div>
@@ -244,67 +246,34 @@ interface NLPStats {
             <div class="control-group">
               <label>
                 <input type="checkbox" [(ngModel)]="analyzeAfterIngestion" class="analyze-checkbox">
-                Analyser automatiquement après ingestion
+                Analyser automatiquement après synchronisation
               </label>
             </div>
             
             <div class="control-actions">
               <button 
                 class="test-btn" 
-                (click)="testEmailConnection()" 
+                (click)="checkGmailConnection()" 
                 [disabled]="isTestingConnection()">
                 @if (isTestingConnection()) {
-                  <span class="spinner">⏳</span> Test en cours...
+                  <span class="spinner">⏳</span> Vérification...
                 } @else {
-                  <span>🔗 Tester la connexion</span>
+                  <span>🔗 Vérifier Gmail</span>
                 }
               </button>
               
               <button 
                 class="ingest-btn" 
-                (click)="startEmailIngestion()" 
+                (click)="startGmailSync()" 
                 [disabled]="isIngesting() || !connectionTested()"
                 [class.ingesting]="isIngesting()">
                 @if (isIngesting()) {
-                  <span class="spinner">⏳</span> Ingestion en cours...
+                  <span class="spinner">⏳</span> Synchronisation...
                 } @else {
-                  <span>📬 Récupérer les emails</span>
+                  <span>📧 Synchroniser les emails</span>
                 }
               </button>
-            </div>
-          </div>
-          
-          @if (connectionResult()) {
-            <div class="connection-result" [class]="connectionResult()?.success ? 'success' : 'error'">
-              <strong>Test de connexion :</strong> {{ connectionResult()?.message }}
-            </div>
-          }
-          
-          @if (ingestionResult()) {
-            <div class="ingestion-result" [class]="ingestionResult()?.success ? 'success' : 'error'">
-              <h3>Résultats de l'ingestion</h3>
-              <div class="result-details">
-                <p><strong>Emails trouvés :</strong> {{ ingestionResult()?.emails_found }}</p>
-                <p><strong>Emails sauvegardés :</strong> {{ ingestionResult()?.emails_saved }}</p>
-                @if (ingestionResult()?.analysis) {
-                  <p><strong>Emails analysés :</strong> {{ ingestionResult()?.analysis?.processed_count }}</p>
-                  @if (ingestionResult()?.analysis?.errors && (ingestionResult()?.analysis?.errors?.length || 0) > 0) {
-                    <details>
-                      <summary>Erreurs d'analyse ({{ ingestionResult()?.analysis?.errors?.length || 0 }})</summary>
-                      <ul class="error-list">
-                        @for (error of ingestionResult()?.analysis?.errors || []; track error) {
-                          <li>{{ error }}</li>
-                        }
-                      </ul>
-                    </details>
-                  }
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="email-analysis-section">
+            </div>        <div class="email-analysis-section">
           <h2>🔍 Analyse des Emails</h2>
           <div class="analysis-controls">
             <div class="control-group">
@@ -1009,7 +978,11 @@ export class NlpDashboardComponent implements OnInit {
     errors?: string[];
   } | null>(null);
 
-  constructor(private emailService: EmailService) {}
+  constructor(
+    private emailService: EmailService,
+    private gmailOAuthService: GmailOAuthService,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() {
     this.loadNLPStats();
@@ -1031,24 +1004,38 @@ export class NlpDashboardComponent implements OnInit {
     });
   }
 
-  testEmailConnection() {
+  /**
+   * Vérifier le statut de connexion Gmail OAuth
+   */
+  checkGmailConnection() {
     if (this.isTestingConnection()) return;
     
     this.isTestingConnection.set(true);
     this.connectionResult.set(null);
     
-    this.emailService.testEmailConnection().subscribe({
-      next: (result) => {
-        console.log('Test de connexion:', result);
-        this.connectionResult.set(result);
-        this.connectionTested.set(result.success);
+    this.gmailOAuthService.gmailStatus$.subscribe({
+      next: (status) => {
+        console.log('Statut Gmail:', status);
+        if (status && status.connected) {
+          this.connectionResult.set({
+            success: true,
+            message: `Gmail connecté: ${status.email}`
+          });
+          this.connectionTested.set(true);
+        } else {
+          this.connectionResult.set({
+            success: false,
+            message: 'Gmail non connecté. Veuillez vous connecter via "Paramètres Gmail".'
+          });
+          this.connectionTested.set(false);
+        }
         this.isTestingConnection.set(false);
       },
       error: (error) => {
-        console.error('Erreur test de connexion:', error);
+        console.error('Erreur vérification Gmail:', error);
         this.connectionResult.set({
           success: false,
-          message: 'Erreur lors du test de connexion'
+          message: 'Erreur lors de la vérification de la connexion Gmail'
         });
         this.connectionTested.set(false);
         this.isTestingConnection.set(false);
@@ -1056,30 +1043,51 @@ export class NlpDashboardComponent implements OnInit {
     });
   }
 
-  startEmailIngestion() {
+  /**
+   * Synchroniser les emails depuis Gmail via OAuth
+   */
+  startGmailSync() {
     if (this.isIngesting()) return;
+    
+    if (!this.connectionTested()) {
+      alert('Veuillez d\'abord vérifier votre connexion Gmail');
+      return;
+    }
     
     this.isIngesting.set(true);
     this.ingestionResult.set(null);
     
-    const options = {
-      daysBack: parseInt(this.selectedIngestionInterval),
-      analyzeAfterIngestion: this.analyzeAfterIngestion
-    };
+    const maxEmails = 100; // Nombre d'emails à synchroniser
     
-    this.emailService.ingestEmails(options).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/oauth/gmail/sync-emails`, null, {
+      params: {
+        max_emails: maxEmails.toString(),
+        days_back: this.selectedIngestionInterval
+      }
+    }).subscribe({
       next: (result) => {
-        console.log('Résultats ingestion:', result);
-        this.ingestionResult.set(result);
+        console.log('Résultat synchronisation Gmail:', result);
+        this.ingestionResult.set({
+          ...result,
+          daysBack: parseInt(this.selectedIngestionInterval)
+        });
         this.isIngesting.set(false);
-        // Recharger les stats après l'ingestion
+        
+        // Si analyse automatique demandée
+        if (this.analyzeAfterIngestion && result.synced_emails > 0) {
+          setTimeout(() => {
+            this.startEmailAnalysis();
+          }, 1000);
+        }
+        
+        // Recharger les stats après la synchronisation
         this.loadNLPStats();
       },
       error: (error) => {
-        console.error('Erreur lors de l\'ingestion:', error);
+        console.error('Erreur synchronisation Gmail:', error);
         this.ingestionResult.set({
           success: false,
-          message: 'Erreur lors de l\'ingestion des emails',
+          message: error.error?.detail || 'Erreur lors de la synchronisation des emails',
           emails_found: 0,
           emails_saved: 0
         });

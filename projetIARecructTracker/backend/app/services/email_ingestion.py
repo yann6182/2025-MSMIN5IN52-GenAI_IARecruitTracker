@@ -12,7 +12,14 @@ import re
 
 
 class EmailIngestionService:
-    """Service pour récupérer les emails depuis IMAP et les stocker en base"""
+    """
+    [DEPRECATED] Service pour récupérer les emails depuis IMAP
+    
+    ⚠️ Ce service est obsolète. Utilisez plutôt GmailAPIService avec Gmail OAuth 2.0
+    qui est plus sécurisé et ne nécessite pas de mot de passe d'application.
+    
+    Voir: app/services/gmail_api_service.py
+    """
     
     def __init__(self, db: Session):
         self.db = db

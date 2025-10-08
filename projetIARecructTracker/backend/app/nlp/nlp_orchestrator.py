@@ -54,9 +54,9 @@ class NLPOrchestrator:
             # Mettre à jour l'email avec la classification
             email.classification = classification.email_type.value
             
-            # 3. Matching avec candidatures existantes
+            # 3. Matching avec candidatures existantes (en filtrant par utilisateur)
             matches = await self.matching_service.find_matching_applications(
-                subject, body, sender
+                subject, body, sender, email.user_id
             )
             results["matching"] = [m.model_dump() for m in matches]
             

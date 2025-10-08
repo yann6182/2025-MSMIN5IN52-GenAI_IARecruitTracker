@@ -58,13 +58,13 @@ def link_email_to_application(
     db: Session = Depends(get_db)
 ):
     """
-    Lier un email à une candidature
+    Lier un email à une candidature de l'utilisateur connecté
     """
     try:
         email_service = EmailService(db)
-        success = email_service.link_email_to_application(email_id, application_id)
+        success = email_service.link_email_to_application(email_id, application_id, current_user.id)
         if not success:
-            raise HTTPException(status_code=404, detail="Email ou candidature non trouvé(e)")
+            raise HTTPException(status_code=404, detail="Email ou candidature non trouvé(e) ou non autorisé(e)")
         return {"message": "Email lié avec succès"}
     except HTTPException:
         raise
@@ -75,14 +75,15 @@ def link_email_to_application(
 @router.get("/{email_id}", response_model=Email)
 def get_email(
     email_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer un email spécifique
+    Récupérer un email spécifique de l'utilisateur connecté
     """
     try:
         email_service = EmailService(db)
-        email = email_service.get_email(email_id)
+        email = email_service.get_email(email_id, current_user.id)
         if not email:
             raise HTTPException(status_code=404, detail="Email non trouvé")
         return email

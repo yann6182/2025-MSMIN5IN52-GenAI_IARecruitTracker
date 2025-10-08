@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.nlp.nlp_orchestrator import NLPOrchestrator
 from app.nlp.matching_service import EmailMatchingService
-from app.models.models import Email
+from app.models.models import Email, User
+from app.api.v1.endpoints.auth import get_current_user
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -84,16 +85,18 @@ async def classify_email(
 @router.post("/match")
 async def find_matching_applications(
     request: MatchingRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Trouver les candidatures correspondant à un email
+    Trouver les candidatures correspondant à un email pour l'utilisateur connecté
     """
     matching_service = EmailMatchingService(db)
     matches = await matching_service.find_matching_applications(
         request.email_subject,
         request.email_body,
-        request.sender_email
+        request.sender_email,
+        current_user.id  # Filtrer par utilisateur
     )
     
     return {"matches": matches}

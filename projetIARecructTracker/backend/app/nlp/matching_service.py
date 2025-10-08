@@ -36,22 +36,25 @@ class EmailMatchingService:
         email_subject: str,
         email_body: str,
         sender_email: str,
+        user_id,  # Ajouter user_id pour filtrer
         sender_domain: str = None
     ) -> List[MatchingResult]:
         """
-        Trouver les candidatures correspondant à un email
+        Trouver les candidatures correspondant à un email pour un utilisateur spécifique
         
         Args:
             email_subject: Sujet de l'email
             email_body: Corps de l'email  
             sender_email: Email de l'expéditeur
+            user_id: ID de l'utilisateur (pour filtrer ses candidatures uniquement)
             sender_domain: Domaine de l'expéditeur
             
         Returns:
             Liste des candidatures correspondantes triées par score
         """
-        # Récupérer toutes les candidatures actives
+        # Récupérer uniquement les candidatures actives de l'utilisateur
         applications = self.db.query(Application).filter(
+            Application.user_id == user_id,
             Application.status.in_(['APPLIED', 'ACKNOWLEDGED', 'SCREENING', 'INTERVIEW'])
         ).all()
         
@@ -261,6 +264,7 @@ class EmailMatchingService:
             email.subject or "",
             email.snippet or email.raw_body or "",
             email.sender or "",
+            email.user_id,  # Passer le user_id de l'email
         )
         
         if matches and matches[0].confidence >= min_confidence:

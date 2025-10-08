@@ -20,22 +20,25 @@ class EmailService:
         self.classification_service = EmailClassificationService()
         self.matching_service = EmailMatchingService(db)
 
-    def get_emails(self, skip: int = 0, limit: int = 50, unlinked_only: bool = False) -> List[Email]:
+    def get_emails(self, user_id: UUID, skip: int = 0, limit: int = 50, unlinked_only: bool = False) -> List[Email]:
         """
-        Récupérer les emails avec option de filtrage
+        Récupérer les emails de l'utilisateur avec option de filtrage
         """
-        query = self.db.query(Email)
+        query = self.db.query(Email).filter(Email.user_id == user_id)
         
         if unlinked_only:
             query = query.filter(Email.application_id.is_(None))
         
         return query.order_by(Email.created_at.desc()).offset(skip).limit(limit).all()
 
-    def get_email(self, email_id: UUID) -> Email:
+    def get_email(self, email_id: UUID, user_id: UUID) -> Email:
         """
-        Récupérer un email spécifique
+        Récupérer un email spécifique appartenant à l'utilisateur
         """
-        return self.db.query(Email).filter(Email.id == email_id).first()
+        return self.db.query(Email).filter(
+            Email.id == email_id,
+            Email.user_id == user_id
+        ).first()
 
     async def create_email(self, email_data: EmailCreate) -> Email:
         """
@@ -134,21 +137,36 @@ class EmailService:
             )
             self.db.add(event)
 
-    def link_email_to_application(self, email_id: UUID, application_id: UUID) -> bool:
+    def link_email_to_application(self, email_id: UUID, application_id: UUID, user_id: UUID) -> bool:
         """
-        Lier un email à une candidature
+        Lier un email à une candidature (en vérifiant que les deux appartiennent à l'utilisateur)
         """
-        db_email = self.db.query(Email).filter(Email.id == email_id).first()
+        from app.models.models import Application
+        
+        db_email = self.db.query(Email).filter(
+            Email.id == email_id,
+            Email.user_id == user_id
+        ).first()
+        
         if not db_email:
+            return False
+        
+        # Vérifier que l'application appartient aussi à l'utilisateur
+        application = self.db.query(Application).filter(
+            Application.id == application_id,
+            Application.user_id == user_id
+        ).first()
+        
+        if not application:
             return False
         
         db_email.application_id = application_id
         self.db.commit()
         return True
 
-    async def import_email_files(self, files: List[UploadFile]) -> List[dict]:
+    async def import_email_files(self, files: List[UploadFile], user_id: UUID) -> List[dict]:
         """
-        Importer des emails depuis des fichiers .eml
+        Importer des emails depuis des fichiers .eml pour un utilisateur spécifique
         """
         results = []
         parser = Parser()
@@ -160,6 +178,7 @@ class EmailService:
                 
                 # Extraire les informations de l'email
                 email_data = EmailCreate(
+                    user_id=user_id,  # Associer à l'utilisateur
                     external_id=msg.get('Message-ID'),
                     subject=msg.get('Subject'),
                     sender=msg.get('From'),
@@ -170,9 +189,10 @@ class EmailService:
                     snippet=self._extract_snippet(msg)
                 )
                 
-                # Vérifier si l'email n'existe pas déjà
+                # Vérifier si l'email n'existe pas déjà pour cet utilisateur
                 existing = self.db.query(Email).filter(
-                    Email.external_id == email_data.external_id
+                    Email.external_id == email_data.external_id,
+                    Email.user_id == user_id
                 ).first()
                 
                 if not existing:

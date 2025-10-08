@@ -5,7 +5,7 @@ import os
 import secrets
 import json
 from typing import Dict, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 import httpx
 from sqlalchemy.orm import Session
@@ -51,7 +51,7 @@ class GmailOAuthService:
 
     def _cleanup_expired_states(self):
         """Nettoie les states OAuth expirés"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         expired_states = [
             state for state, data in self._oauth_states.items()
             if current_time > data.get("expires_at", current_time)
@@ -76,8 +76,8 @@ class GmailOAuthService:
         self._oauth_states[state] = {
             "user_id": None,  # Sera créé lors du callback
             "is_registration": True,
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(minutes=10)
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)
         }
         
         # Paramètres OAuth
@@ -117,8 +117,8 @@ class GmailOAuthService:
         # Stocker le state avec l'user_id (temporairement)
         self._oauth_states[state] = {
             "user_id": user_id,
-            "created_at": datetime.utcnow(),
-            "expires_at": datetime.utcnow() + timedelta(minutes=10)
+            "created_at": datetime.now(timezone.utc),
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)
         }
         
         # Paramètres OAuth
@@ -157,7 +157,7 @@ class GmailOAuthService:
             state_data = self._oauth_states[state]
             
             # Vérifier l'expiration
-            if datetime.utcnow() > state_data["expires_at"]:
+            if datetime.now(timezone.utc) > state_data["expires_at"]:
                 del self._oauth_states[state]
                 raise ValueError("State OAuth expiré")
                 
@@ -191,7 +191,7 @@ class GmailOAuthService:
             # Mettre à jour les tokens OAuth de l'utilisateur
             user.gmail_access_token = token_data["access_token"]
             user.gmail_refresh_token = token_data.get("refresh_token")
-            user.gmail_token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
+            user.gmail_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
             user.gmail_connected = True
             user.gmail_email = user_email
             
@@ -340,7 +340,7 @@ class GmailOAuthService:
                 
                 # Mettre à jour le token d'accès
                 user.gmail_access_token = token_data["access_token"]
-                user.gmail_token_expires_at = datetime.utcnow() + timedelta(seconds=token_data["expires_in"])
+                user.gmail_token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
                 
                 # Nouveau refresh token s'il est fourni
                 if "refresh_token" in token_data:
@@ -364,7 +364,8 @@ class GmailOAuthService:
             
         # Ajouter une marge de 5 minutes
         expiry_with_buffer = user.gmail_token_expires_at - timedelta(minutes=5)
-        return datetime.utcnow() < expiry_with_buffer
+        now = datetime.now(timezone.utc)
+        return now < expiry_with_buffer
 
     async def ensure_valid_token(self, user: User) -> bool:
         """
