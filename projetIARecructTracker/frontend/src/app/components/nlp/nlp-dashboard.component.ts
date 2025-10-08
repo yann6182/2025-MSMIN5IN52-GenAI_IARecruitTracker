@@ -287,12 +287,12 @@ interface NLPStats {
                 <p><strong>Emails trouvés :</strong> {{ ingestionResult()?.emails_found }}</p>
                 <p><strong>Emails sauvegardés :</strong> {{ ingestionResult()?.emails_saved }}</p>
                 @if (ingestionResult()?.analysis) {
-                  <p><strong>Emails analysés :</strong> {{ ingestionResult()?.analysis.processed_count }}</p>
-                  @if (ingestionResult()?.analysis.errors?.length > 0) {
+                  <p><strong>Emails analysés :</strong> {{ ingestionResult()?.analysis?.processed_count }}</p>
+                  @if (ingestionResult()?.analysis?.errors && (ingestionResult()?.analysis?.errors?.length || 0) > 0) {
                     <details>
-                      <summary>Erreurs d'analyse ({{ ingestionResult()?.analysis.errors.length }})</summary>
+                      <summary>Erreurs d'analyse ({{ ingestionResult()?.analysis?.errors?.length || 0 }})</summary>
                       <ul class="error-list">
-                        @for (error of ingestionResult()?.analysis.errors; track error) {
+                        @for (error of ingestionResult()?.analysis?.errors || []; track error) {
                           <li>{{ error }}</li>
                         }
                       </ul>

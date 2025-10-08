@@ -16,6 +16,7 @@ class ApplicationService:
 
     def get_applications(
         self, 
+        user_id: UUID,
         skip: int = 0, 
         limit: int = 50, 
         status: Optional[str] = None,
@@ -23,9 +24,9 @@ class ApplicationService:
         search_query: Optional[str] = None
     ) -> List[Application]:
         """
-        Récupérer les candidatures avec filtres optionnels
+        Récupérer les candidatures avec filtres optionnels pour un utilisateur spécifique
         """
-        query = self.db.query(Application)
+        query = self.db.query(Application).filter(Application.user_id == user_id)
         
         if status:
             query = query.filter(Application.status == status)
@@ -42,21 +43,35 @@ class ApplicationService:
         
         return query.order_by(Application.updated_at.desc()).offset(skip).limit(limit).all()
 
-    def create_application(self, application: ApplicationCreate) -> Application:
+    def create_application(self, application: ApplicationCreate, user_id: UUID) -> Application:
         """
-        Créer une nouvelle candidature
+        Créer une nouvelle candidature pour un utilisateur spécifique
         """
         # Définir la prochaine action par défaut (7 jours après la candidature)
         next_action_at = application.next_action_at or (datetime.utcnow() + timedelta(days=7))
         
         db_application = Application(
+            user_id=user_id,
             job_title=application.job_title,
             company_name=application.company_name,
             source=application.source,
             location=application.location,
             status=application.status,
             notes=application.notes,
-            next_action_at=next_action_at
+            next_action_at=next_action_at,
+            # Nouveaux champs pour le tracking intelligent
+            contact_person=application.contact_person,
+            contact_email=application.contact_email,
+            interview_date=application.interview_date,
+            response_deadline=application.response_deadline,
+            job_reference=application.job_reference,
+            urgency_level=application.urgency_level,
+            expected_salary=application.expected_salary,
+            offer_amount=application.offer_amount,
+            offer_deadline=application.offer_deadline,
+            rejection_reason=application.rejection_reason,
+            applied_date=application.applied_date,
+            priority=application.priority
         )
         
         self.db.add(db_application)
@@ -76,20 +91,20 @@ class ApplicationService:
         
         return db_application
 
-    def get_application_full(self, application_id: UUID):
+    def get_application_full(self, application_id: UUID, user_id: UUID):
         """
-        Récupérer une candidature avec ses événements et emails
+        Récupérer une candidature avec ses événements et emails pour un utilisateur spécifique
         """
         return self.db.query(Application)\
-            .filter(Application.id == application_id)\
+            .filter(Application.id == application_id, Application.user_id == user_id)\
             .first()
 
-    def update_application(self, application_id: UUID, application_update: ApplicationUpdate):
+    def update_application(self, application_id: UUID, application_update: ApplicationUpdate, user_id: UUID):
         """
-        Mettre à jour une candidature
+        Mettre à jour une candidature pour un utilisateur spécifique
         """
         db_application = self.db.query(Application)\
-            .filter(Application.id == application_id)\
+            .filter(Application.id == application_id, Application.user_id == user_id)\
             .first()
         
         if not db_application:
@@ -119,12 +134,12 @@ class ApplicationService:
         
         return db_application
 
-    def delete_application(self, application_id: UUID) -> bool:
+    def delete_application(self, application_id: UUID, user_id: UUID) -> bool:
         """
-        Supprimer une candidature
+        Supprimer une candidature pour un utilisateur spécifique
         """
         db_application = self.db.query(Application)\
-            .filter(Application.id == application_id)\
+            .filter(Application.id == application_id, Application.user_id == user_id)\
             .first()
         
         if not db_application:
@@ -134,13 +149,13 @@ class ApplicationService:
         self.db.commit()
         return True
 
-    def get_application_events(self, application_id: UUID):
+    def get_application_events(self, application_id: UUID, user_id: UUID):
         """
-        Récupérer les événements d'une candidature
+        Récupérer les événements d'une candidature pour un utilisateur spécifique
         """
-        # Vérifier que la candidature existe
+        # Vérifier que la candidature existe et appartient à l'utilisateur
         application = self.db.query(Application)\
-            .filter(Application.id == application_id)\
+            .filter(Application.id == application_id, Application.user_id == user_id)\
             .first()
         
         if not application:

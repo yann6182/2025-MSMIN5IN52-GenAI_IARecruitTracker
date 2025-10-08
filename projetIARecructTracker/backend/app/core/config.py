@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # CORS - will be parsed from comma-separated string
     ALLOWED_ORIGINS: Union[List[str], str]
     
+    # Backend URL for OAuth callbacks
+    BACKEND_URL: str = "http://localhost:8000"
+    
     # Email providers
     GMAIL_CLIENT_ID: str
     GMAIL_CLIENT_SECRET: str

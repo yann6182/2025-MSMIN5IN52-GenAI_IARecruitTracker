@@ -143,7 +143,7 @@ Stack : **FastAPI** (Python) · **PostgreSQL** · **Angular** · **Docker Compos
 ---
 
 ## 4) Architecture (vue simple)
-
+az
 Angular (UI) ⟶ FastAPI (API REST + jobs d’ingestion) ⟶ PostgreSQL (données)
 
 Connecteurs mails : Gmail API / IMAP (pull périodique) ou import manuel.

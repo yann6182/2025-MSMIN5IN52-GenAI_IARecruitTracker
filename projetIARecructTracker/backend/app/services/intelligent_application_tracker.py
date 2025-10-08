@@ -28,12 +28,13 @@ class IntelligentApplicationTracker:
         self.db = db
         self.application_service = ApplicationService(db)
 
-    def process_email_batch(self, limit: int = 50) -> Dict[str, Any]:
+    def process_email_batch(self, user_id: int, limit: int = 50) -> Dict[str, Any]:
         """
-        Traite un lot d'emails pour détecter et mettre à jour les candidatures
+        Traite un lot d'emails pour détecter et mettre à jour les candidatures de l'utilisateur spécifié
         """
-        # Récupérer les emails non traités
+        # Récupérer les emails non traités de l'utilisateur
         emails = self.db.query(Email).filter(
+            Email.user_id == user_id,
             Email.application_id.is_(None),
             Email.classification.isnot(None)
         ).order_by(Email.sent_at.desc()).limit(limit).all()
@@ -79,7 +80,7 @@ class IntelligentApplicationTracker:
         extracted_info = self._extract_email_information(email)
         
         # Chercher une candidature existante correspondante
-        matching_application = self._find_matching_application(extracted_info)
+        matching_application = self._find_matching_application(extracted_info, email.user_id)
         
         if matching_application:
             # Mettre à jour la candidature existante si nécessaire
@@ -419,9 +420,9 @@ class IntelligentApplicationTracker:
             return email_address.split('@')[1].lower()
         return None
 
-    def _find_matching_application(self, extracted_info: Dict[str, Any]) -> Optional[Application]:
+    def _find_matching_application(self, extracted_info: Dict[str, Any], user_id: int) -> Optional[Application]:
         """
-        Trouve une candidature correspondante basée sur les informations extraites
+        Trouve une candidature correspondante basée sur les informations extraites pour un utilisateur spécifique
         """
         company_name = extracted_info.get("company_name")
         job_title = extracted_info.get("job_title")
@@ -429,8 +430,9 @@ class IntelligentApplicationTracker:
         if not company_name:
             return None
             
-        # Recherche par nom d'entreprise (similarité)
+        # Recherche par nom d'entreprise (similarité) pour l'utilisateur spécifique
         applications = self.db.query(Application).filter(
+            Application.user_id == user_id,
             Application.company_name.isnot(None)
         ).all()
         
@@ -532,7 +534,7 @@ class IntelligentApplicationTracker:
             response_deadline=extracted_info.get("response_deadline")
         )
         
-        return self.application_service.create_application(application_data)
+        return self.application_service.create_application(application_data, user_id=email.user_id)
 
     def _generate_application_notes(self, email: Email, extracted_info: Dict[str, Any]) -> str:
         """
@@ -558,22 +560,29 @@ class IntelligentApplicationTracker:
         
         return notes
 
-    def get_processing_summary(self) -> Dict[str, Any]:
+    def get_processing_summary(self, user_id: int) -> Dict[str, Any]:
         """
-        Retourne un résumé du traitement des candidatures
+        Retourne un résumé du traitement des candidatures pour un utilisateur spécifique
         """
-        total_applications = self.db.query(Application).count()
-        total_emails = self.db.query(Email).count()
-        linked_emails = self.db.query(Email).filter(Email.application_id.isnot(None)).count()
+        total_applications = self.db.query(Application).filter(Application.user_id == user_id).count()
+        total_emails = self.db.query(Email).filter(Email.user_id == user_id).count()
+        linked_emails = self.db.query(Email).filter(
+            Email.user_id == user_id,
+            Email.application_id.isnot(None)
+        ).count()
         
-        # Applications par statut
+        # Applications par statut pour l'utilisateur
         status_breakdown = {}
         for status in ApplicationStatus:
-            count = self.db.query(Application).filter(Application.status == status.value).count()
+            count = self.db.query(Application).filter(
+                Application.user_id == user_id,
+                Application.status == status.value
+            ).count()
             status_breakdown[status.value] = count
         
-        # Applications créées automatiquement vs manuellement
+        # Applications créées automatiquement vs manuellement pour l'utilisateur
         auto_created = self.db.query(Application).filter(
+            Application.user_id == user_id,
             Application.source.like('%Détecté automatiquement%')
         ).count()
         

@@ -100,7 +100,7 @@ interface FilterState {
             <span>✅ {{ lastProcessingResult()?.results?.created_applications || 0 }} créées</span>
             <span>🔄 {{ lastProcessingResult()?.results?.updated_applications || 0 }} mises à jour</span>
             <span>📧 {{ lastProcessingResult()?.results?.processed_emails || 0 }} emails traités</span>
-            @if (lastProcessingResult()?.results?.errors && lastProcessingResult()?.results?.errors.length) {
+            @if (lastProcessingResult()?.results?.errors && lastProcessingResult()?.results?.errors?.length) {
               <span class="error">⚠️ {{ lastProcessingResult()?.results?.errors?.length || 0 }} erreurs</span>
             }
           </div>
@@ -212,7 +212,7 @@ interface FilterState {
             <tbody>
               @if (isLoading()) {
                 <tr>
-                  <td [colspan]="visibleColumns().length + 1" class="loading-row">
+                  <td [attr.colspan]="visibleColumns().length + 1" class="loading-row">
                     <div class="table-loading">
                       <div class="spinner"></div>
                       Chargement des candidatures...
@@ -221,7 +221,7 @@ interface FilterState {
                 </tr>
               } @else if (filteredApplications().length === 0) {
                 <tr>
-                  <td [colspan]="visibleColumns().length + 1" class="empty-row">
+                  <td [attr.colspan]="visibleColumns().length + 1" class="empty-row">
                     <div class="empty-state">
                       @if (hasActiveFilters()) {
                         <p>Aucune candidature ne correspond aux filtres</p>

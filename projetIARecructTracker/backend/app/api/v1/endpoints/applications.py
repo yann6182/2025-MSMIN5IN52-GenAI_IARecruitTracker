@@ -7,8 +7,10 @@ from app.models.schemas import (
     Application, ApplicationCreate, ApplicationUpdate,
     ApplicationWithEvents, ApplicationFull
 )
+from app.models.models import User
 from app.services.application_service import ApplicationService
 from app.services.email_to_application_service import EmailToApplicationService
+from app.api.v1.endpoints.auth import get_current_user
 
 router = APIRouter()
 
@@ -19,14 +21,16 @@ def get_applications(
     status: Optional[str] = Query(None, description="Filtrer par statut"),
     company: Optional[str] = Query(None, description="Filtrer par entreprise"),
     q: Optional[str] = Query(None, description="Recherche textuelle"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer la liste des candidatures avec filtres optionnels
+    Récupérer la liste des candidatures avec filtres optionnels pour l'utilisateur connecté
     """
     try:
         application_service = ApplicationService(db)
         applications = application_service.get_applications(
+            user_id=current_user.id,
             skip=skip, 
             limit=limit, 
             status=status, 
@@ -41,14 +45,15 @@ def get_applications(
 @router.post("/", response_model=Application, status_code=201)
 def create_application(
     application: ApplicationCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Créer une nouvelle candidature
+    Créer une nouvelle candidature pour l'utilisateur connecté
     """
     try:
         application_service = ApplicationService(db)
-        return application_service.create_application(application)
+        return application_service.create_application(application, current_user.id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -56,6 +61,7 @@ def create_application(
 @router.get("/{application_id}", response_model=ApplicationFull)
 def get_application(
     application_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -63,7 +69,7 @@ def get_application(
     """
     try:
         application_service = ApplicationService(db)
-        application = application_service.get_application_full(application_id)
+        application = application_service.get_application_full(application_id, current_user.id)
         if not application:
             raise HTTPException(status_code=404, detail="Candidature non trouvée")
         return application
@@ -77,6 +83,7 @@ def get_application(
 def update_application(
     application_id: UUID,
     application_update: ApplicationUpdate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -85,7 +92,7 @@ def update_application(
     try:
         application_service = ApplicationService(db)
         updated_application = application_service.update_application(
-            application_id, application_update
+            application_id, application_update, current_user.id
         )
         if not updated_application:
             raise HTTPException(status_code=404, detail="Candidature non trouvée")
@@ -99,6 +106,7 @@ def update_application(
 @router.delete("/{application_id}", status_code=204)
 def delete_application(
     application_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -106,7 +114,7 @@ def delete_application(
     """
     try:
         application_service = ApplicationService(db)
-        success = application_service.delete_application(application_id)
+        success = application_service.delete_application(application_id, current_user.id)
         if not success:
             raise HTTPException(status_code=404, detail="Candidature non trouvée")
     except HTTPException:
@@ -118,6 +126,7 @@ def delete_application(
 @router.get("/{application_id}/events", response_model=List[dict])
 def get_application_events(
     application_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -125,7 +134,7 @@ def get_application_events(
     """
     try:
         application_service = ApplicationService(db)
-        events = application_service.get_application_events(application_id)
+        events = application_service.get_application_events(application_id, current_user.id)
         if events is None:
             raise HTTPException(status_code=404, detail="Candidature non trouvée")
         return events
@@ -136,7 +145,10 @@ def get_application_events(
 
 
 @router.get("/stats/summary")
-def get_applications_summary(db: Session = Depends(get_db)):
+def get_applications_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Récupérer un résumé statistique des candidatures
     """

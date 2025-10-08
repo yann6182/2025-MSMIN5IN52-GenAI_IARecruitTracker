@@ -3,7 +3,9 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional
 from datetime import datetime
 from app.core.database import get_db
+from app.models.models import User
 from app.services.intelligent_application_tracker import IntelligentApplicationTracker
+from app.api.v1.endpoints.auth import get_current_user
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,22 +16,23 @@ router = APIRouter()
 @router.post("/process-emails", response_model=Dict[str, Any])
 def process_emails_for_applications(
     limit: int = Query(50, description="Nombre maximum d'emails à traiter"),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Lance l'analyse intelligente des emails pour détecter et mettre à jour les candidatures.
     
     Cette endpoint fonctionne comme un Excel intelligent qui:
-    - Analyse automatiquement les emails entrants
+    - Analyse automatiquement les emails entrants de l'utilisateur connecté
     - Crée de nouvelles candidatures quand nécessaire
     - Met à jour les statuts des candidatures existantes
     - Extrait automatiquement les informations pertinentes
     """
     try:
         tracker = IntelligentApplicationTracker(db)
-        results = tracker.process_email_batch(limit=limit)
+        results = tracker.process_email_batch(user_id=current_user.id, limit=limit)
         
-        logger.info(f"Traitement terminé: {results['processed_emails']} emails traités, "
+        logger.info(f"Traitement terminé pour l'utilisateur {current_user.email}: {results['processed_emails']} emails traités, "
                    f"{results['created_applications']} candidatures créées, "
                    f"{results['updated_applications']} candidatures mises à jour")
         
@@ -40,7 +43,7 @@ def process_emails_for_applications(
         }
         
     except Exception as e:
-        logger.error(f"Erreur lors du traitement des emails: {str(e)}")
+        logger.error(f"Erreur lors du traitement des emails pour {current_user.email}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Erreur lors du traitement des emails: {str(e)}"
@@ -48,28 +51,24 @@ def process_emails_for_applications(
 
 
 @router.get("/processing-summary", response_model=Dict[str, Any])
-def get_processing_summary(db: Session = Depends(get_db)):
+def get_processing_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
-    Obtient un résumé du traitement automatique des candidatures.
-    
-    Retourne des statistiques sur:
-    - Nombre total de candidatures
-    - Candidatures créées automatiquement vs manuellement
-    - Emails traités vs non traités
-    - Répartition par statut
-    - Taux d'automatisation
+    Récupère un résumé des traitements effectués récemment pour l'utilisateur connecté.
     """
     try:
         tracker = IntelligentApplicationTracker(db)
-        summary = tracker.get_processing_summary()
+        summary = tracker.get_processing_summary(user_id=current_user.id)
         
         return {
             "success": True,
-            "data": summary
+            "summary": summary
         }
         
     except Exception as e:
-        logger.error(f"Erreur lors de la récupération du résumé: {str(e)}")
+        logger.error(f"Erreur lors de la récupération du résumé pour {current_user.email}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Erreur lors de la récupération du résumé: {str(e)}"

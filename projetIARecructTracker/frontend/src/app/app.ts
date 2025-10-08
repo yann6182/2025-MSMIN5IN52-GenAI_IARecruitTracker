@@ -17,6 +17,7 @@ export class App {
     { path: '/companies', icon: '🏢', label: 'Entreprises' },
     { path: '/job-offers', icon: '💼', label: 'Offres d\'Emploi' },
     { path: '/emails', icon: '📧', label: 'Emails' },
+    { path: '/gmail-connection', icon: '📬', label: 'Gmail OAuth' },
     { path: '/nlp', icon: '🧠', label: 'IA Dashboard' }
   ];
 }

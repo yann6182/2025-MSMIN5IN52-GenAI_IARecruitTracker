@@ -1,189 +1,59 @@
-# 🎨 Frontend AI Recruit Tracker
+# Frontend
 
-Interface utilisateur moderne développée avec Angular 17+ et composants standalone.
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.0.
 
-## 🚀 Démarrage rapide
+## Development server
 
-### Développement
+To start a local development server, run:
+
 ```bash
-# Depuis la racine du projet
-./scripts/dev-frontend.sh
-
-# Ou manuellement
-cd frontend/frontend
-npm install
-npm start
+ng serve
 ```
 
-Le frontend sera disponible sur http://localhost:4200
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-### Production (Docker)
+## Code scaffolding
+
+Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+
 ```bash
-# Depuis infra/
-docker-compose up -d frontend
+ng generate component component-name
 ```
 
-## 🏗️ Architecture
+For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
-### Structure
-```
-frontend/frontend/
-├── src/
-│   ├── app/
-│   │   ├── components/          # Composants UI
-│   │   │   ├── dashboard/       # Dashboard principal
-│   │   │   ├── job-applications/ # Gestion candidatures
-│   │   │   ├── companies/       # Gestion entreprises
-│   │   │   ├── emails/          # Gestion emails
-│   │   │   └── nlp/             # Interface IA/NLP
-│   │   ├── models/              # Types TypeScript
-│   │   ├── services/            # Services HTTP
-│   │   ├── app.routes.ts        # Routes principales
-│   │   └── app.config.ts        # Configuration
-│   ├── environments/           # Configuration environnement
-│   └── styles.scss            # Styles globaux
-```
-
-### Composants principaux
-
-- **DashboardComponent** : Vue d'ensemble avec statistiques
-- **JobApplicationsListComponent** : Liste des candidatures avec filtres
-- **NlpDashboardComponent** : Interface de test IA en temps réel
-- **Composants placeholder** : Structures prêtes pour développement
-
-## 🔌 Connexion Backend
-
-### Configuration
-Les services Angular se connectent automatiquement au backend via :
-- **Development** : `http://localhost:8000/api/v1`
-- **Production** : `https://api.ai-recruit-tracker.com/api/v1`
-
-### Services disponibles
-- `CompanyService` : Gestion entreprises
-- `JobOfferService` : Gestion offres d'emploi  
-- `JobApplicationService` : Gestion candidatures
-- `EmailService` : Gestion emails + NLP
-- `ApplicationEventService` : Événements et historique
-
-## 🎯 Fonctionnalités implémentées
-
-### ✅ Opérationnel
-- Navigation responsive avec menu principal
-- Dashboard avec statistiques en temps réel
-- Liste des candidatures avec filtres
-- Interface de test NLP avec Mistral AI
-- Styles modernes et animations
-- Configuration multi-environnement
-
-### 🔄 En développement
-- Formulaires de création/édition
-- Détails des candidatures avec timeline
-- Gestion complète des entreprises
-- Interface de traitement des emails
-- Tableaux de bord analytiques
-
-## 🎨 Design System
-
-### Couleurs principales
-- **Primary** : `#667eea` (violet-bleu)
-- **Success** : `#10b981` (vert)
-- **Warning** : `#f59e0b` (orange) 
-- **Error** : `#ef4444` (rouge)
-- **Background** : `#f8fafc` (gris très clair)
-
-### Composants UI
-- Cards avec ombres et hover effects
-- Boutons avec animations
-- Badges colorés pour les statuts
-- Grid responsive
-- Loading states avec spinners
-
-## 🧪 Test de l'interface NLP
-
-Le composant `NlpDashboardComponent` permet de tester en temps réel :
-
-1. **Saisie d'email** : Sujet, corps, expéditeur
-2. **Analyse IA automatique** :
-   - Classification du type d'email
-   - Extraction d'entités (entreprise, poste, contact)
-   - Matching avec candidatures existantes
-3. **Résultats visuels** avec scores de confiance
-
-### Exemple de test
-```
-Sujet: "Accusé de réception - Poste Développeur Python"
-Corps: "Nous avons bien reçu votre candidature..."
-Expéditeur: "rh@techcorp.com"
-
-→ Classification: ACK (95% confiance)
-→ Entités: TechCorp, Développeur Python, RH
-→ Matching: Recherche candidatures correspondantes
-```
-
-## 📱 Responsive Design
-
-L'interface s'adapte automatiquement :
-- **Desktop** : Navigation horizontale, grids multi-colonnes
-- **Tablet** : Navigation adaptée, grids 2 colonnes
-- **Mobile** : Navigation verticale, grids 1 colonne, menus condensés
-
-## 🔧 Personnalisation
-
-### Thème
-Modifiez `src/app/app.scss` pour personnaliser :
-- Couleurs du header
-- Effets de hover
-- Animations et transitions
-
-### Environnements
-Configurez `src/environments/environment.ts` :
-- URL de l'API backend
-- Features flags
-- Timeout des requêtes
-- Niveaux de logging
-
-## 🚧 Roadmap Frontend
-
-### Phase 1 (Actuelle)
-- ✅ Structure et navigation
-- ✅ Dashboard principal  
-- ✅ Interface NLP de test
-- ✅ Liste des candidatures
-
-### Phase 2
-- 🔄 Formulaires CRUD complets
-- 🔄 Timeline des événements
-- 🔄 Gestion des fichiers (CV, lettres)
-- 🔄 Notifications en temps réel
-
-### Phase 3  
-- 🔄 Graphiques et analytics
-- 🔄 Intégration email (IMAP/Gmail)
-- 🔄 Exports PDF/Excel
-- 🔄 Mode sombre/clair
-
-## 🐛 Debug
-
-### Problèmes courants
 ```bash
-# Erreurs de compilation TypeScript
-npm run build
-
-# Problèmes de dépendances
-rm -rf node_modules package-lock.json
-npm install
-
-# CORS errors avec le backend
-# Vérifier l'URL dans environment.ts
+ng generate --help
 ```
 
-### Logs de développement
-Les services loggent automatiquement :
-- Appels API en cours
-- Erreurs de connexion
-- Réponses du backend
-- États des composants
+## Building
 
----
+To build the project run:
 
-✨ **Interface moderne connectée à l'IA pour un suivi intelligent des candidatures !**
+```bash
+ng build
+```
+
+This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Running unit tests
+
+To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+
+```bash
+ng test
+```
+
+## Running end-to-end tests
+
+For end-to-end (e2e) testing, run:
+
+```bash
+ng e2e
+```
+
+Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Additional Resources
+
+For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

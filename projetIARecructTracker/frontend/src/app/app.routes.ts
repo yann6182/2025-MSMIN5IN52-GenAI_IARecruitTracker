@@ -45,5 +45,13 @@ export const routes: Routes = [
   {
     path: 'nlp',
     loadComponent: () => import('./components/nlp/nlp-dashboard.component').then(m => m.NlpDashboardComponent)
+  },
+  {
+    path: 'gmail-connection',
+    loadComponent: () => import('./components/gmail-connection/gmail-connection.component').then(m => m.GmailConnectionComponent)
+  },
+  {
+    path: 'oauth/callback',
+    loadComponent: () => import('./components/oauth-callback/oauth-callback.component').then(m => m.OAuthCallbackComponent)
   }
 ];

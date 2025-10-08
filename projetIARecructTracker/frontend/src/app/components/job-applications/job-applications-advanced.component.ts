@@ -805,6 +805,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
   // Nouveau formulaire
   newApplication: CreateJobApplicationRequest = {
     job_offer_id: '',
+    job_title: '',
+    company_name: '',
     status: 'APPLIED',
     applied_date: new Date().toISOString().split('T')[0],
     priority: 'MEDIUM',
@@ -907,7 +909,9 @@ export class JobApplicationsAdvancedComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(app => 
-        app.job_offer_id.toLowerCase().includes(term) ||
+        app.job_offer_id?.toLowerCase().includes(term) ||
+        app.job_title?.toLowerCase().includes(term) ||
+        app.company_name?.toLowerCase().includes(term) ||
         app.notes?.toLowerCase().includes(term) ||
         app.contact_person?.toLowerCase().includes(term)
       );
@@ -997,7 +1001,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
     return labels[type] || type;
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'Non défini';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
   }
@@ -1054,6 +1059,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
   duplicateApplication(application: JobApplication) {
     const duplicate: CreateJobApplicationRequest = {
       job_offer_id: `${application.job_offer_id}-copie`,
+      job_title: application.job_title + ' (copie)',
+      company_name: application.company_name,
       status: 'APPLIED',
       applied_date: new Date().toISOString().split('T')[0],
       priority: application.priority,
@@ -1076,6 +1083,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
   resetForm() {
     this.newApplication = {
       job_offer_id: '',
+      job_title: '',
+      company_name: '',
       status: 'APPLIED',
       applied_date: new Date().toISOString().split('T')[0],
       priority: 'MEDIUM',
@@ -1094,6 +1103,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
       {
         id: '1',
         job_offer_id: 'fullstack-dev-001',
+        job_title: 'Développeur Fullstack',
+        company_name: 'TechCorp',
         status: 'INTERVIEW',
         applied_date: '2024-09-25',
         last_update_date: '2024-09-26',
@@ -1109,6 +1120,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
       {
         id: '2',
         job_offer_id: 'data-scientist-002',
+        job_title: 'Data Scientist',
+        company_name: 'DataCorp',
         status: 'ACKNOWLEDGED',
         applied_date: '2024-09-24',
         priority: 'MEDIUM',
@@ -1122,6 +1135,8 @@ export class JobApplicationsAdvancedComponent implements OnInit {
       {
         id: '3',
         job_offer_id: 'product-manager-003',
+        job_title: 'Product Manager',
+        company_name: 'StartupCorp',
         status: 'REJECTED',
         applied_date: '2024-09-20',
         last_update_date: '2024-09-23',

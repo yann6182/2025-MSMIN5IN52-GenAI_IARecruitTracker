@@ -562,7 +562,8 @@ export class JobApplicationsListComponent implements OnInit {
     return icons[priority] || '⚪';
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'Non défini';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
   }
@@ -582,6 +583,8 @@ export class JobApplicationsListComponent implements OnInit {
       {
         id: '1',
         job_offer_id: 'offer-001',
+        job_title: 'Développeur Frontend Senior',
+        company_name: 'TechCorp',
         status: 'INTERVIEW',
         applied_date: '2024-09-25',
         last_update_date: '2024-09-26',
@@ -597,6 +600,8 @@ export class JobApplicationsListComponent implements OnInit {
       {
         id: '2',
         job_offer_id: 'offer-002',
+        job_title: 'Ingénieur DevOps',
+        company_name: 'CloudTech',
         status: 'ACKNOWLEDGED',
         applied_date: '2024-09-24',
         expected_salary: 48000,
@@ -610,6 +615,8 @@ export class JobApplicationsListComponent implements OnInit {
       {
         id: '3',
         job_offer_id: 'offer-003',
+        job_title: 'Architecte Solutions',
+        company_name: 'EnterpriseCorp',
         status: 'REJECTED',
         applied_date: '2024-09-20',
         last_update_date: '2024-09-23',
