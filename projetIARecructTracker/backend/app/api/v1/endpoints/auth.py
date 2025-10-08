@@ -87,3 +87,10 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def read_users_me(current_user = Depends(get_current_user)):
     """Récupérer les informations de l'utilisateur connecté"""
     return current_user
+
+@router.post("/logout")
+def logout(current_user = Depends(get_current_user)):
+    """Déconnexion de l'utilisateur"""
+    # Pour JWT, la déconnexion côté serveur est optionnelle
+    # Le frontend supprime simplement le token du localStorage
+    return {"message": "Déconnexion réussie"}

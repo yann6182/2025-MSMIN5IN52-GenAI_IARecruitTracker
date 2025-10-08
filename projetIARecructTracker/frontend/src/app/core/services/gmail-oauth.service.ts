@@ -51,8 +51,15 @@ export class GmailOAuthService {
    * Redirige vers Google OAuth
    */
   initiateGmailAuth(): void {
-    // Redirection directe vers l'endpoint d'autorisation
-    window.location.href = `${this.apiUrl}/gmail/authorize`;
+    // Récupérer le token depuis localStorage
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.error('Aucun token d\'authentification trouvé');
+      return;
+    }
+    
+    // Redirection avec le token en paramètre d'URL pour OAuth
+    window.location.href = `${this.apiUrl}/gmail/authorize?token=${encodeURIComponent(token)}`;
   }
 
   /**

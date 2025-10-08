@@ -1,26 +1,50 @@
 <div class="app-layout">
-  <nav class="sidebar">
-    <div class="logo-section">
-      <h2>🤖 AI Recruit Tracker</h2>
-    </div>
+  @if (isAuthenticated) {
+    <!-- Navigation pour utilisateurs connectés -->
+    <nav class="sidebar">
+      <div class="logo-section">
+        <h2>🤖 AI Recruit Tracker</h2>
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ getUserDisplayName().charAt(0).toUpperCase() }}
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ getUserDisplayName() }}</span>
+            <span class="user-email">{{ currentUser?.email }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <ul class="nav-menu">
+        @for (item of menuItems; track item.path) {
+          <li>
+            <a 
+              [routerLink]="item.path" 
+              routerLinkActive="active"
+              class="nav-link"
+            >
+              <span class="nav-icon">{{ item.icon }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="nav-footer">
+        <button class="logout-btn" (click)="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-label">Déconnexion</span>
+        </button>
+      </div>
+    </nav>
     
-    <ul class="nav-menu">
-      @for (item of menuItems; track item.path) {
-        <li>
-          <a 
-            [routerLink]="item.path" 
-            routerLinkActive="active"
-            class="nav-link"
-          >
-            <span class="nav-icon">{{ item.icon }}</span>
-            <span class="nav-label">{{ item.label }}</span>
-          </a>
-        </li>
-      }
-    </ul>
-  </nav>
-  
-  <main class="main-content">
-    <router-outlet></router-outlet>
-  </main>
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  } @else {
+    <!-- Layout pour utilisateurs non connectés -->
+    <main class="auth-layout">
+      <router-outlet></router-outlet>
+    </main>
+  }
 </div>
