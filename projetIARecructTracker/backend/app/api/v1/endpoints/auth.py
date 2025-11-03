@@ -1,5 +1,5 @@
 from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Cookie
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Cookie
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -29,8 +29,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return create_user(db=db, user=user)
 
 @router.post("/login")
-def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    """Connexion d'un utilisateur - retourne un token Bearer"""
+def login(user_credentials: UserLogin, response: Response, db: Session = Depends(get_db)):
+    """Connexion d'un utilisateur - définit un cookie HttpOnly"""
     user = authenticate_user(db, user_credentials.email, user_credentials.password)
     if not user:
         raise HTTPException(
@@ -45,7 +45,17 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
         expires_delta=access_token_expires
     )
     
-    # Retourner le token directement dans la réponse (simple et fiable)
+    # Définir le cookie HttpOnly avec le token
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=24 * 60 * 60,  # 24 heures en secondes
+        samesite="lax",
+        secure=False  # True en production avec HTTPS
+    )
+    
+    # Retourner aussi le token pour compatibilité
     return {
         "success": True,
         "message": "Connexion réussie",
@@ -116,8 +126,9 @@ def read_users_me(current_user = Depends(get_current_user)):
     return current_user
 
 @router.post("/logout")
-def logout(current_user = Depends(get_current_user)):
+def logout(response: Response, current_user = Depends(get_current_user)):
     """
-    Déconnexion de l'utilisateur
+    Déconnexion de l'utilisateur - supprime le cookie
     """
+    response.delete_cookie(key="access_token")
     return {"success": True, "message": "Déconnexion réussie"}

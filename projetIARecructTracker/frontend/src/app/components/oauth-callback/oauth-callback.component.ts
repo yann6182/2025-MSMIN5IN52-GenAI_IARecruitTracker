@@ -163,34 +163,42 @@ export class OAuthCallbackComponent implements OnInit {
       const success = params['success'] === 'true';
       const error = params['error'];
       const email = params['email'];
-      const token = params['token'];  // ✅ Récupérer le token depuis l'URL
       const isNewUser = params['new_user'] === 'true';
       
-      console.log('OAuth Callback - Params reçus:', { success, error, email, token: token ? 'present' : 'missing', isNewUser });
+      console.log('OAuth Callback - Params reçus:', { success, error, email, isNewUser });
       
       // Simuler un temps de traitement
       setTimeout(() => {
         this.isLoading = false;
         
-        if (success && email && token) {
+        if (success && email) {
           this.success = true;
           this.email = email;
+          this.isNewUser = isNewUser;
           
-          // ✅ Stocker le token dans sessionStorage IMMÉDIATEMENT
-          sessionStorage.setItem('app_token', token);
-          console.log('✅ Token stocké dans sessionStorage');
+          // ✅ Le cookie HttpOnly a été défini par le backend
+          // On charge maintenant l'état d'authentification
+          console.log('✅ Gmail connecté - Rechargement de l\'état d\'authentification...');
           
-          // Charger l'utilisateur maintenant que le token est disponible
-          this.loadCurrentUser();
-          
-          // Notifier le service OAuth
-          this.gmailOAuthService.handleOAuthCallback(true, email);
-          
-          // Redirection après un court délai
-          setTimeout(() => {
-            console.log('Redirection vers le dashboard...');
-            this.redirectToApp();
-          }, 1500);
+          this.authService.reloadAuthState().subscribe({
+            next: (user) => {
+              console.log('✅ Utilisateur authentifié:', user.email);
+              
+              // Notifier le service OAuth du succès
+              this.gmailOAuthService.handleOAuthCallback(true, email);
+              
+              // Redirection après un court délai
+              setTimeout(() => {
+                console.log('Redirection vers le dashboard...');
+                this.redirectToApp();
+              }, 1500);
+            },
+            error: (error) => {
+              console.error('❌ Erreur lors du chargement de l\'utilisateur:', error);
+              this.success = false;
+              this.errorMessage = 'Connexion réussie mais impossible de charger votre profil. Veuillez vous reconnecter.';
+            }
+          });
           
         } else {
           this.success = false;
@@ -214,29 +222,6 @@ export class OAuthCallbackComponent implements OnInit {
       default:
         return 'Une erreur inattendue s\'est produite. Veuillez réessayer.';
     }
-  }
-
-  /**
-   * Charge les informations de l'utilisateur depuis le backend
-   * Le cookie HttpOnly a été configuré par le backend lors du callback OAuth
-   */
-  private loadCurrentUser(): void {
-    // ✅ Le cookie est déjà défini par le backend lors du callback OAuth
-    // Recharger explicitement l'état d'authentification
-    console.log('✅ Gmail connecté avec succès - Rechargement de l\'état d\'authentification...');
-    
-    this.authService.reloadAuthState().subscribe({
-      next: (user) => {
-        console.log('✅ Utilisateur authentifié:', user.email);
-        // Rediriger vers le dashboard maintenant que l'état est à jour
-        this.redirectToApp();
-      },
-      error: (error) => {
-        console.error('❌ Erreur lors du chargement de l\'utilisateur:', error);
-        this.errorMessage = 'Impossible de charger les informations utilisateur';
-        this.isLoading = false;
-      }
-    });
   }
 
   retryAuth(): void {

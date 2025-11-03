@@ -21,9 +21,8 @@ import { environment } from '../../../environments/environment';
 })
 export class AuthService {
   private readonly API_URL = `${environment.apiUrl}/auth`;
-  private readonly TOKEN_KEY = 'app_token'; // sessionStorage uniquement pour dev
   
-  // État de l'authentification (en mémoire uniquement, pas de localStorage)
+  // État de l'authentification (en mémoire uniquement)
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   
@@ -52,12 +51,19 @@ export class AuthService {
    */
   private initializeAuth(): void {
     // Essayer de récupérer l'utilisateur depuis le backend (cookie HttpOnly envoyé automatiquement)
-    this.getCurrentUser().subscribe({
+    // On utilise catchError ici pour gérer silencieusement les erreurs 401 au démarrage
+    this.http.get<User>(`${this.API_URL}/me`).pipe(
+      catchError(() => {
+        // Pas de cookie valide ou expiré, l'utilisateur n'est pas connecté
+        // Ne pas afficher d'erreur, c'est normal
+        return throwError(() => new Error('Not authenticated'));
+      })
+    ).subscribe({
       next: (user) => {
         this.setCurrentUser(user);
       },
       error: () => {
-        // Pas de cookie valide ou expiré, l'utilisateur n'est pas connecté
+        // Silencieusement ignorer l'erreur - l'utilisateur n'est simplement pas connecté
         this.clearSession(false);
       }
     });
@@ -207,31 +213,20 @@ export class AuthService {
    * Méthodes privées
    */
   private setSession(authResponse: AuthResponse): void {
-    // En dev, le cookie cross-port ne fonctionne pas toujours
-    // On stocke le token en sessionStorage comme fallback (sécurisé car vidé à la fermeture)
-    if (authResponse.access_token) {
-      sessionStorage.setItem(this.TOKEN_KEY, authResponse.access_token);
+    // Le cookie HttpOnly est déjà défini par le backend
+    // On met juste à jour l'état local
+    if (authResponse.user) {
+      this.setCurrentUser(authResponse.user);
     }
-    this.setCurrentUser(authResponse.user);
   }
 
   private clearSession(navigate: boolean = true): void {
-    // Nettoyer le sessionStorage
-    sessionStorage.removeItem(this.TOKEN_KEY);
-    
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
     
     if (navigate) {
       this.router.navigate(['/auth/login']);
     }
-  }
-
-  /**
-   * Récupérer le token stocké (pour dev cross-port)
-   */
-  getToken(): string | null {
-    return sessionStorage.getItem(this.TOKEN_KEY);
   }
 
   private isTokenExpired(token: string): boolean {

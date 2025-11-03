@@ -265,21 +265,18 @@ class GmailOAuthService:
             return existing_user
         
         # Créer un nouveau compte utilisateur
-        from app.services.auth_service import hash_password
+        from app.services.auth_service import get_password_hash
         import secrets
         
         # Générer un mot de passe temporaire (l'utilisateur pourra le changer plus tard)
         temp_password = secrets.token_urlsafe(16)
-        hashed_password = hash_password(temp_password)
+        hashed_password = get_password_hash(temp_password)
         
         new_user = User(
             email=email,
             hashed_password=hashed_password,
             is_active=True,
-            gmail_email=email,
-            # Ajouter les informations du profil Google si disponibles
-            job_title=user_info.get("name", ""),  # Utiliser le nom comme titre temporaire
-            company_name="",  # Sera rempli plus tard par l'utilisateur
+            gmail_email=email
         )
         
         self.db.add(new_user)

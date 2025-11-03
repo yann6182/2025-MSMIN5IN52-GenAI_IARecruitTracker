@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface GmailOAuthStatus {
   connected: boolean;
@@ -42,10 +43,18 @@ export class GmailOAuthService {
   private gmailStatusSubject = new BehaviorSubject<GmailOAuthStatus | null>(null);
   public gmailStatus$ = this.gmailStatusSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    // Vérifier le statut au démarrage
-    // Le cookie HttpOnly sera automatiquement envoyé avec la requête
-    this.checkGmailStatus();
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {
+    // Ne vérifier le statut Gmail que si l'utilisateur est authentifié
+    this.authService.isAuthenticated$.subscribe((isAuth: boolean) => {
+      if (isAuth) {
+        this.checkGmailStatus();
+      } else {
+        this.gmailStatusSubject.next(null);
+      }
+    });
   }
 
   /**

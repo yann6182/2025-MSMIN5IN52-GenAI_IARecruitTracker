@@ -466,7 +466,7 @@ export class GmailAuthWelcomeComponent implements OnInit {
     // Si l'utilisateur n'est pas encore authentifié, démarrer le processus OAuth
     // qui créera automatiquement un compte
     setTimeout(() => {
-      this.gmailOAuthService.initiateGmailAuth();
+      this.gmailOAuthService.initiateGmailAuthAndRegister();
     }, 1500);
   }
 
